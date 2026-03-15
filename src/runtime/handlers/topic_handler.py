@@ -7,6 +7,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from src.config.constants import STATE_AWAITING_NEW_TOPIC, STATE_MAIN_MENU
+from src.config.i18n import t
 from src.runtime.keyboards import main_menu_keyboard
 from src.service.payment_service import PaymentService
 from src.service.topic_service import TopicService
@@ -15,25 +16,29 @@ from src.types.exceptions import TopicLimitError
 logger = logging.getLogger(__name__)
 
 
+def _lang(update: Update) -> str | None:
+    """Extract language_code from the effective user."""
+    return update.effective_user.language_code if update.effective_user else None
+
+
 async def add_topic_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle '➕ Add topic' button press."""
     if not update.message:
         return STATE_MAIN_MENU
 
+    lang = _lang(update)
     topic_service: TopicService = context.bot_data["topic_service"]
     payment_service: PaymentService = context.bot_data["payment_service"]
     user_id = context.user_data.get("db_user_id")
 
     if not user_id:
-        await update.message.reply_text("Please use /start first.")
+        await update.message.reply_text(t("use_start_first", lang))
         return STATE_MAIN_MENU
 
     can_free = await topic_service.can_add_free_topic(user_id)
 
     if can_free:
-        await update.message.reply_text(
-            "📝 Type the name of your new topic (e.g., sunsets, puppies):"
-        )
+        await update.message.reply_text(t("enter_new_topic", lang))
         return STATE_AWAITING_NEW_TOPIC
 
     # Need to pay — send invoice
@@ -54,12 +59,13 @@ async def receive_new_topic(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     if not update.message or not update.message.text:
         return STATE_AWAITING_NEW_TOPIC
 
+    lang = _lang(update)
     topic_name = update.message.text.strip()
     topic_service: TopicService = context.bot_data["topic_service"]
     user_id = context.user_data.get("db_user_id")
 
     if not user_id:
-        await update.message.reply_text("Please use /start first.")
+        await update.message.reply_text(t("use_start_first", lang))
         return STATE_MAIN_MENU
 
     # Determine if this should be free or paid
@@ -70,17 +76,17 @@ async def receive_new_topic(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             user_id=user_id, name=topic_name, is_free=is_free
         )
     except ValueError as exc:
-        await update.message.reply_text(f"❌ {exc}\n\nPlease try again:")
+        await update.message.reply_text(t("error_try_again", lang, error=str(exc)))
         return STATE_AWAITING_NEW_TOPIC
     except TopicLimitError:
         await update.message.reply_text(
-            "❌ You've reached the free topic limit. Please pay to add more.",
+            t("topic_limit_reached", lang),
             reply_markup=main_menu_keyboard(),
         )
         return STATE_MAIN_MENU
 
     await update.message.reply_text(
-        f"✅ Topic *{topic.name}* added! Now set up a schedule for it.",
+        t("topic_added", lang, name=topic.name),
         reply_markup=main_menu_keyboard(),
         parse_mode="Markdown",
     )

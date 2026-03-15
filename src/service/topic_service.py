@@ -27,9 +27,12 @@ class TopicService:
         telegram_id: int,
         username: str | None = None,
         first_name: str | None = None,
+        language_code: str | None = None,
     ) -> User:
         """Get or create a user."""
-        return await self._user_repo.get_or_create(telegram_id, username, first_name)
+        return await self._user_repo.get_or_create(
+            telegram_id, username, first_name, language_code
+        )
 
     async def add_topic(self, user_id: int, name: str, is_free: bool = True) -> Topic:
         """Add a new topic for a user.

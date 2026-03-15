@@ -33,7 +33,7 @@ def service(user_repo, topic_repo):
 async def test_ensure_user(service: TopicService, user_repo):
     user = await service.ensure_user(12345, "test", "Test")
     assert user.telegram_id == 12345
-    user_repo.get_or_create.assert_awaited_once_with(12345, "test", "Test")
+    user_repo.get_or_create.assert_awaited_once_with(12345, "test", "Test", None)
 
 
 @pytest.mark.asyncio

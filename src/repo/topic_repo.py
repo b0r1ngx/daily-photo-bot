@@ -32,6 +32,16 @@ class TopicRepo:
             is_active=True,
         )
 
+    async def get_by_id(self, topic_id: int) -> Topic | None:
+        """Get a single active topic by ID."""
+        cursor = await self._db.execute(
+            'SELECT id, user_id, name, is_free, is_active, created_at '
+            'FROM topics WHERE id = ? AND is_active = 1',
+            (topic_id,),
+        )
+        row = await cursor.fetchone()
+        return self._row_to_topic(row) if row else None
+
     async def get_by_user(self, user_id: int, active_only: bool = True) -> list[Topic]:
         """Get all topics for a user."""
         query = (
@@ -65,11 +75,13 @@ class TopicRepo:
 
     async def update_name(self, topic_id: int, new_name: str) -> None:
         """Rename an active topic."""
-        await self._db.execute(
+        cursor = await self._db.execute(
             'UPDATE topics SET name = ? WHERE id = ? AND is_active = 1',
             (new_name, topic_id),
         )
         await self._db.commit()
+        if cursor.rowcount == 0:
+            raise ValueError(f'Topic {topic_id} not found or inactive')
         logger.info("Renamed topic_id=%d to '%s'", topic_id, new_name)
 
     @staticmethod

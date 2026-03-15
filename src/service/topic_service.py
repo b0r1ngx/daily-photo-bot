@@ -60,6 +60,10 @@ class TopicService:
 
         return await self._topic_repo.create(user_id, cleaned, is_free)
 
+    async def get_topic(self, topic_id: int) -> Topic | None:
+        """Get a single active topic by ID."""
+        return await self._topic_repo.get_by_id(topic_id)
+
     async def get_user_topics(self, user_id: int) -> list[Topic]:
         """Get all active topics for a user."""
         return await self._topic_repo.get_by_user(user_id)

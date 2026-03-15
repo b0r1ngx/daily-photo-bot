@@ -33,6 +33,8 @@ def topic_list_keyboard(topics: list[Topic]) -> InlineKeyboardMarkup:
 
 def topic_manage_keyboard(topic: Topic) -> InlineKeyboardMarkup:
     """Build inline keyboard with rename/delete actions for a topic."""
+    if topic.id is None:
+        raise ValueError(f'Cannot build manage keyboard for topic without id: {topic.name}')
     return InlineKeyboardMarkup([
         [
             InlineKeyboardButton("✏️ Rename", callback_data=f"rename_{topic.id}"),

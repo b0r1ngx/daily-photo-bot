@@ -33,6 +33,9 @@ class TopicRepository(Protocol):
     async def create(self, user_id: int, name: str, is_free: bool = True) -> Topic:
         ...
 
+    async def get_by_id(self, topic_id: int) -> Topic | None:
+        ...
+
     async def get_by_user(self, user_id: int, active_only: bool = True) -> list[Topic]:
         ...
 

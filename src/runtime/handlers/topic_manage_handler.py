@@ -5,6 +5,7 @@ import logging
 
 from telegram import Update
 from telegram.ext import ContextTypes
+from telegram.helpers import escape_markdown
 
 from src.config.constants import STATE_EDIT_TOPIC_NAME, STATE_MAIN_MENU, STATE_TOPIC_MANAGE
 from src.runtime.keyboards import main_menu_keyboard, topic_manage_keyboard
@@ -37,7 +38,7 @@ async def my_topics_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await update.message.reply_text('📋 *Your Topics:*', parse_mode='Markdown')
     for topic in topics:
         await update.message.reply_text(
-            f'📌 *{topic.name}*',
+            f'📌 *{escape_markdown(topic.name)}*',
             parse_mode='Markdown',
             reply_markup=topic_manage_keyboard(topic),
         )
@@ -59,6 +60,12 @@ async def delete_topic_callback(update: Update, context: ContextTypes.DEFAULT_TY
         return STATE_TOPIC_MANAGE
 
     topic_service: TopicService = context.bot_data['topic_service']
+
+    topic = await topic_service.get_topic(topic_id)
+    if not topic or topic.user_id != query.from_user.id:
+        await query.edit_message_text('❌ Topic not found.')
+        return STATE_TOPIC_MANAGE
+
     schedule_service: ScheduleService = context.bot_data['schedule_service']
 
     # Remove schedule first (if exists), then soft-delete topic
@@ -87,6 +94,12 @@ async def rename_topic_callback(update: Update, context: ContextTypes.DEFAULT_TY
         topic_id = int(query.data.split('_', 1)[1])
     except (IndexError, ValueError):
         await query.edit_message_text('❌ Invalid selection.')
+        return STATE_TOPIC_MANAGE
+
+    topic_service: TopicService = context.bot_data['topic_service']
+    topic = await topic_service.get_topic(topic_id)
+    if not topic or topic.user_id != query.from_user.id:
+        await query.edit_message_text('❌ Topic not found.')
         return STATE_TOPIC_MANAGE
 
     context.user_data['rename_topic_id'] = topic_id
@@ -122,7 +135,7 @@ async def receive_new_topic_name(update: Update, context: ContextTypes.DEFAULT_T
     del context.user_data['rename_topic_id']
 
     await update.message.reply_text(
-        f'✅ Topic renamed to *{new_name}*!',
+        f'✅ Topic renamed to *{escape_markdown(new_name)}*!',
         parse_mode='Markdown',
         reply_markup=main_menu_keyboard(),
     )

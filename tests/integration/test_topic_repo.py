@@ -87,11 +87,36 @@ async def test_update_name(topic_repo: TopicRepo, user_id: int) -> None:
 
 @pytest.mark.asyncio
 async def test_update_name_deleted_topic(topic_repo: TopicRepo, user_id: int) -> None:
-    """Renaming a soft-deleted topic should be a no-op."""
+    """Renaming a soft-deleted topic should raise ValueError."""
     topic = await topic_repo.create(user_id=user_id, name='doomed', is_free=True)
     assert topic.id is not None
     await topic_repo.delete(topic.id)
-    await topic_repo.update_name(topic.id, 'new name')
-    topics = await topic_repo.get_by_user(user_id, active_only=False)
-    # Name should NOT have changed because the WHERE clause requires is_active=1
-    assert topics[0].name == 'doomed'
+    with pytest.raises(ValueError):
+        await topic_repo.update_name(topic.id, 'new name')
+
+
+@pytest.mark.asyncio
+async def test_get_by_id(topic_repo: TopicRepo, user_id: int) -> None:
+    """Test fetching a topic by its ID."""
+    topic = await topic_repo.create(user_id=user_id, name='findme', is_free=True)
+    assert topic.id is not None
+    found = await topic_repo.get_by_id(topic.id)
+    assert found is not None
+    assert found.name == 'findme'
+
+
+@pytest.mark.asyncio
+async def test_get_by_id_not_found(topic_repo: TopicRepo) -> None:
+    """get_by_id returns None for non-existent topic."""
+    found = await topic_repo.get_by_id(99999)
+    assert found is None
+
+
+@pytest.mark.asyncio
+async def test_get_by_id_deleted(topic_repo: TopicRepo, user_id: int) -> None:
+    """get_by_id returns None for soft-deleted topic."""
+    topic = await topic_repo.create(user_id=user_id, name='deleted', is_free=True)
+    assert topic.id is not None
+    await topic_repo.delete(topic.id)
+    found = await topic_repo.get_by_id(topic.id)
+    assert found is None

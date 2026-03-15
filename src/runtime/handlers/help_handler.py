@@ -50,8 +50,11 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not update.message:
         return STATE_MAIN_MENU
 
+    # Clean up any pending state
+    context.user_data.pop('rename_topic_id', None)
+
     await update.message.reply_text(
-        "↩️ Action cancelled. Use the menu below.",
+        "↩️ Action cancelled.",
         reply_markup=main_menu_keyboard(),
     )
     return STATE_MAIN_MENU

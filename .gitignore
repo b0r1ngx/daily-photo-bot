@@ -4,8 +4,34 @@ AGENTS.md
 docs/
 tools/
 
-# python specific
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+venv/
+.venv/
+
+# Environment
+.env
+
+# Database
+data/
+*.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
 
 # MacOS specific
 .DS_Store

@@ -63,6 +63,15 @@ class TopicRepo:
         await self._db.commit()
         logger.info("Deactivated topic_id=%d", topic_id)
 
+    async def update_name(self, topic_id: int, new_name: str) -> None:
+        """Rename an active topic."""
+        await self._db.execute(
+            'UPDATE topics SET name = ? WHERE id = ? AND is_active = 1',
+            (new_name, topic_id),
+        )
+        await self._db.commit()
+        logger.info("Renamed topic_id=%d to '%s'", topic_id, new_name)
+
     @staticmethod
     def _row_to_topic(row: aiosqlite.Row) -> Topic:
         return Topic(

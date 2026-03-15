@@ -72,3 +72,23 @@ async def test_can_add_free_topic(service: TopicService, topic_repo):
     assert await service.can_add_free_topic(1) is True
     topic_repo.count_by_user.return_value = 1
     assert await service.can_add_free_topic(1) is False
+
+
+@pytest.mark.asyncio
+async def test_rename_topic_success(service: TopicService, topic_repo) -> None:
+    """Test renaming a topic with valid name."""
+    await service.rename_topic(1, 'new name')
+    topic_repo.update_name.assert_called_once_with(1, 'new name')
+
+
+@pytest.mark.asyncio
+async def test_rename_topic_invalid_name(service: TopicService) -> None:
+    """Test renaming with invalid name raises ValueError."""
+    with pytest.raises(ValueError):
+        await service.rename_topic(1, '')
+
+    with pytest.raises(ValueError):
+        await service.rename_topic(1, 'a' * 51)
+
+    with pytest.raises(ValueError):
+        await service.rename_topic(1, '!!!')

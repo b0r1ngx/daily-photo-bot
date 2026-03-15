@@ -5,6 +5,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMa
 
 from src.config.constants import (
     KB_ADD_TOPIC,
+    KB_MY_TOPICS,
     KB_SCHEDULE,
     SCHEDULE_HOURS,
     SCHEDULE_INTERVALS,
@@ -16,7 +17,7 @@ from src.types.user import Topic
 def main_menu_keyboard() -> ReplyKeyboardMarkup:
     """Build the main menu ReplyKeyboardMarkup."""
     return ReplyKeyboardMarkup(
-        [[KB_ADD_TOPIC, KB_SCHEDULE]],
+        [[KB_ADD_TOPIC, KB_MY_TOPICS], [KB_SCHEDULE]],
         resize_keyboard=True,
     )
 
@@ -28,6 +29,16 @@ def topic_list_keyboard(topics: list[Topic]) -> InlineKeyboardMarkup:
         for t in topics
     ]
     return InlineKeyboardMarkup(buttons)
+
+
+def topic_manage_keyboard(topic: Topic) -> InlineKeyboardMarkup:
+    """Build inline keyboard with rename/delete actions for a topic."""
+    return InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("✏️ Rename", callback_data=f"rename_{topic.id}"),
+            InlineKeyboardButton("🗑 Delete", callback_data=f"delete_{topic.id}"),
+        ],
+    ])
 
 
 def schedule_type_keyboard() -> InlineKeyboardMarkup:

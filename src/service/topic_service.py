@@ -76,3 +76,21 @@ class TopicService:
     async def remove_topic(self, topic_id: int) -> None:
         """Soft-delete a topic."""
         await self._topic_repo.delete(topic_id)
+
+    async def rename_topic(self, topic_id: int, new_name: str) -> None:
+        """Rename an active topic.
+
+        Args:
+            topic_id: Database topic ID.
+            new_name: New topic name.
+
+        Raises:
+            ValueError: If the new name is invalid.
+        """
+        cleaned = new_name.strip()
+        if not cleaned or not _TOPIC_NAME_PATTERN.match(cleaned):
+            raise ValueError(
+                f"Invalid topic name: '{new_name}'. "
+                "Use 1-50 characters: letters, numbers, spaces, hyphens."
+            )
+        await self._topic_repo.update_name(topic_id, cleaned)

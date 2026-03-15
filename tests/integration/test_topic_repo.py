@@ -73,3 +73,25 @@ async def test_delete_shows_in_all(topic_repo: TopicRepo, user_id: int):
     all_topics = await topic_repo.get_by_user(user_id, active_only=False)
     assert len(all_topics) == 1
     assert all_topics[0].is_active is False
+
+
+@pytest.mark.asyncio
+async def test_update_name(topic_repo: TopicRepo, user_id: int) -> None:
+    """Test renaming a topic."""
+    topic = await topic_repo.create(user_id=user_id, name='old name', is_free=True)
+    assert topic.id is not None
+    await topic_repo.update_name(topic.id, 'new name')
+    topics = await topic_repo.get_by_user(user_id)
+    assert topics[0].name == 'new name'
+
+
+@pytest.mark.asyncio
+async def test_update_name_deleted_topic(topic_repo: TopicRepo, user_id: int) -> None:
+    """Renaming a soft-deleted topic should be a no-op."""
+    topic = await topic_repo.create(user_id=user_id, name='doomed', is_free=True)
+    assert topic.id is not None
+    await topic_repo.delete(topic.id)
+    await topic_repo.update_name(topic.id, 'new name')
+    topics = await topic_repo.get_by_user(user_id, active_only=False)
+    # Name should NOT have changed because the WHERE clause requires is_active=1
+    assert topics[0].name == 'doomed'

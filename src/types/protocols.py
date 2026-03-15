@@ -42,6 +42,9 @@ class TopicRepository(Protocol):
     async def delete(self, topic_id: int) -> None:
         ...
 
+    async def update_name(self, topic_id: int, new_name: str) -> None:
+        ...
+
 
 class ScheduleRepository(Protocol):
     """Interface for schedule data access."""

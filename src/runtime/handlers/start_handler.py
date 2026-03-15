@@ -81,7 +81,10 @@ async def receive_first_topic(update: Update, context: ContextTypes.DEFAULT_TYPE
     if topic.id is not None:
         try:
             photo_service: PhotoService = context.bot_data["photo_service"]
-            photo = await photo_service.get_photo(topic=topic.name, topic_id=topic.id)
+            language_code = update.effective_user.language_code if update.effective_user else None
+            photo = await photo_service.get_photo(
+                topic=topic.name, topic_id=topic.id, language_code=language_code,
+            )
             await update.message.reply_photo(
                 photo=photo.url,
                 caption=(

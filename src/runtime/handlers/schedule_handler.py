@@ -267,10 +267,15 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
     photo_service: PhotoService = context.bot_data["photo_service"]
     schedule_service: ScheduleService = context.bot_data["schedule_service"]
 
-    # Resolve topic name via direct DB query (acceptable shortcut for job callbacks)
+    # Resolve topic name and user language via direct DB query
+    # (acceptable shortcut for job callbacks)
     db = context.bot_data["db"]
     cursor = await db.execute(
-        "SELECT name FROM topics WHERE id = ? AND is_active = 1", (topic_id,)
+        "SELECT t.name, u.language_code "
+        "FROM topics t "
+        "JOIN users u ON t.user_id = u.id "
+        "WHERE t.id = ? AND t.is_active = 1",
+        (topic_id,),
     )
     row = await cursor.fetchone()
     if not row:
@@ -278,9 +283,12 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     topic_name = row[0]
+    language_code = row[1]
 
     try:
-        photo = await photo_service.get_photo(topic=topic_name, topic_id=topic_id)
+        photo = await photo_service.get_photo(
+            topic=topic_name, topic_id=topic_id, language_code=language_code,
+        )
     except Exception:
         logger.exception("Failed to fetch photo for topic '%s'", topic_name)
         return

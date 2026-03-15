@@ -115,6 +115,11 @@ async def select_schedule_type_callback(
             "✅ Schedule removed! You won't receive photos for this topic "
             "until you set a new schedule.",
         )
+        await context.bot.send_message(
+            chat_id=query.from_user.id,
+            text='Use the menu below to continue.',
+            reply_markup=main_menu_keyboard(),
+        )
         return STATE_MAIN_MENU
 
     return STATE_SCHEDULE_TYPE

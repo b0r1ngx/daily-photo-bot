@@ -3,13 +3,16 @@ from __future__ import annotations
 
 import logging
 
+import httpx
 from telegram import Update
+from telegram.error import TelegramError
 from telegram.ext import ContextTypes
 
 from src.config.constants import STATE_AWAITING_TOPIC, STATE_MAIN_MENU
 from src.runtime.keyboards import main_menu_keyboard
 from src.service.photo_service import PhotoService
 from src.service.topic_service import TopicService
+from src.types.exceptions import PhotoNotFoundError, PhotoSourceError
 
 logger = logging.getLogger(__name__)
 
@@ -75,18 +78,19 @@ async def receive_first_topic(update: Update, context: ContextTypes.DEFAULT_TYPE
     )
 
     # Send first photo as a preview (best-effort, don't break the flow)
-    try:
-        photo_service: PhotoService = context.bot_data["photo_service"]
-        photo = await photo_service.get_photo(topic=topic.name, topic_id=topic.id)
-        await update.message.reply_photo(
-            photo=photo.url,
-            caption=(
-                f"📸 *{topic.name}*\n\n"
-                "Here's your first photo! Set up a schedule to receive more."
-            ),
-            parse_mode="Markdown",
-        )
-    except Exception:
-        logger.debug("Could not send first preview photo for topic '%s'", topic.name)
+    if topic.id is not None:
+        try:
+            photo_service: PhotoService = context.bot_data["photo_service"]
+            photo = await photo_service.get_photo(topic=topic.name, topic_id=topic.id)
+            await update.message.reply_photo(
+                photo=photo.url,
+                caption=(
+                    f"📸 *{topic.name}*\n\n"
+                    "Here's your first photo! Set up a schedule to receive more."
+                ),
+                parse_mode="Markdown",
+            )
+        except (PhotoNotFoundError, PhotoSourceError, httpx.HTTPError, TelegramError) as exc:
+            logger.warning("Could not send first preview photo for topic '%s': %s", topic.name, exc)
 
     return STATE_MAIN_MENU

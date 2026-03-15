@@ -33,13 +33,16 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     )
 
 
-async def version_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def version_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int | None:
     """Handle /version command — show bot version."""
     if not update.message:
-        return STATE_MAIN_MENU
+        return None
 
-    await update.message.reply_text(f'🤖 Daily Photo Bot v{BOT_VERSION}')
-    return STATE_MAIN_MENU
+    await update.message.reply_text(
+        f'🤖 Daily Photo Bot v{BOT_VERSION}',
+        reply_markup=main_menu_keyboard(),
+    )
+    return None
 
 
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:

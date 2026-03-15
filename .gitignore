@@ -1,0 +1,11 @@
+# exclude harness-engineering-opencode-kit
+AGENTS.md
+.github
+docs/
+tools/
+
+# python specific
+__pycache__/
+
+# MacOS specific
+.DS_Store

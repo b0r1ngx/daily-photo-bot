@@ -7,6 +7,7 @@ import httpx
 from telegram import Update
 from telegram.error import TelegramError
 from telegram.ext import ContextTypes
+from telegram.helpers import escape_markdown
 
 from src.config.constants import STATE_AWAITING_TOPIC, STATE_MAIN_MENU
 from src.config.i18n import t
@@ -74,7 +75,7 @@ async def receive_first_topic(update: Update, context: ContextTypes.DEFAULT_TYPE
         return STATE_AWAITING_TOPIC
 
     await update.message.reply_text(
-        t("topic_added_with_schedule_hint", lang, name=topic.name),
+        t("topic_added_with_schedule_hint", lang, name=escape_markdown(topic.name)),
         reply_markup=main_menu_keyboard(),
         parse_mode="Markdown",
     )
@@ -88,7 +89,7 @@ async def receive_first_topic(update: Update, context: ContextTypes.DEFAULT_TYPE
             )
             await update.message.reply_photo(
                 photo=photo.url,
-                caption=t("first_photo_caption", lang, name=topic.name),
+                caption=t("first_photo_caption", lang, name=escape_markdown(topic.name)),
                 parse_mode="Markdown",
             )
         except (PhotoNotFoundError, PhotoSourceError, httpx.HTTPError, TelegramError) as exc:

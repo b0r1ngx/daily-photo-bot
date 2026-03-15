@@ -6,6 +6,7 @@ import logging
 
 from telegram import Update
 from telegram.ext import ContextTypes
+from telegram.helpers import escape_markdown
 
 from src.config.constants import (
     STATE_MAIN_MENU,
@@ -81,7 +82,7 @@ async def select_topic_callback(
 
     await query.edit_message_text(
         t("schedule_type_prompt", lang),
-        reply_markup=schedule_type_keyboard(),
+        reply_markup=schedule_type_keyboard(lang),
     )
     return STATE_SCHEDULE_TYPE
 
@@ -160,7 +161,7 @@ async def select_interval_callback(
     _register_interval_job(context, topic_id, seconds, chat_id)
 
     await query.edit_message_text(
-        t("schedule_interval_set", lang, interval=_format_interval(seconds)),
+        t("schedule_interval_set", lang, interval=_format_interval(seconds, lang)),
     )
     return STATE_MAIN_MENU
 
@@ -310,7 +311,7 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
     caption = t(
         "photo_caption",
         language_code,
-        name=topic_name,
+        name=escape_markdown(topic_name),
         photographer=photo.photographer,
         source=photo.source.title(),
         url=photo.source_url,
@@ -333,9 +334,9 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
         await schedule_service.mark_sent(schedule.id)
 
 
-def _format_interval(seconds: int) -> str:
-    """Format seconds into a human-readable interval string."""
+def _format_interval(seconds: int, language_code: str | None = None) -> str:
+    """Format seconds into a localized human-readable interval string."""
     if seconds < 3600:
-        return f"{seconds // 60} minutes"
+        return t('interval_minutes', language_code, count=seconds // 60)
     hours = seconds // 3600
-    return f"{hours} hour{'s' if hours > 1 else ''}"
+    return t('interval_hours', language_code, count=hours)

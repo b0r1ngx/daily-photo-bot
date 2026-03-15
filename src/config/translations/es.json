@@ -40,9 +40,11 @@
     "kb_schedule": "⏰ Schedule",
     "kb_my_topics": "📋 My Topics",
     "kb_back": "◀️ Back",
-    "btn_repeat_interval": "⏱ Repeat interval",
-    "btn_fixed_time": "🕐 Fixed time",
-    "btn_remove_schedule": "🗑 Remove schedule",
-    "btn_rename": "✏️ Rename",
-    "btn_delete": "🗑 Delete"
+    "btn_repeat_interval": "⏱ Intervalo de repetición",
+    "btn_fixed_time": "🕐 Hora fija",
+    "btn_remove_schedule": "🗑 Eliminar horario",
+    "btn_rename": "✏️ Renombrar",
+    "btn_delete": "🗑 Eliminar",
+    "interval_minutes": "{count} minutos",
+    "interval_hours": "{count} horas"
 }

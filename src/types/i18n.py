@@ -62,4 +62,6 @@ MessageKey = Literal[
     "btn_remove_schedule",
     "btn_rename",
     "btn_delete",
+    "interval_minutes",
+    "interval_hours",
 ]

@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 _TRANSLATIONS_DIR = Path(__file__).resolve().parent / "translations"
 _translations_cache: dict[str, dict[str, str]] = {}
 _DEFAULT_LANG = SupportedLanguage.EN.value
+_SUPPORTED_LANGS: frozenset[str] = frozenset(lang.value for lang in SupportedLanguage)
 
 
 def _load_translations(lang: str) -> dict[str, str]:
@@ -37,9 +38,8 @@ def _resolve_language(language_code: str | None) -> str:
         return _DEFAULT_LANG
 
     base = language_code.split("-")[0].lower()
-    supported = {lang.value for lang in SupportedLanguage}
 
-    if base in supported:
+    if base in _SUPPORTED_LANGS:
         return base
     return _DEFAULT_LANG
 

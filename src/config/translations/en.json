@@ -44,5 +44,7 @@
     "btn_fixed_time": "🕐 Fixed time",
     "btn_remove_schedule": "🗑 Remove schedule",
     "btn_rename": "✏️ Rename",
-    "btn_delete": "🗑 Delete"
+    "btn_delete": "🗑 Delete",
+    "interval_minutes": "{count} minutes",
+    "interval_hours": "{count} hours"
 }

@@ -40,9 +40,11 @@
     "kb_schedule": "⏰ Schedule",
     "kb_my_topics": "📋 My Topics",
     "kb_back": "◀️ Back",
-    "btn_repeat_interval": "⏱ Repeat interval",
-    "btn_fixed_time": "🕐 Fixed time",
-    "btn_remove_schedule": "🗑 Remove schedule",
-    "btn_rename": "✏️ Rename",
-    "btn_delete": "🗑 Delete"
+    "btn_repeat_interval": "⏱ 重复间隔",
+    "btn_fixed_time": "🕐 固定时间",
+    "btn_remove_schedule": "🗑 移除排程",
+    "btn_rename": "✏️ 重命名",
+    "btn_delete": "🗑 删除",
+    "interval_minutes": "{count} 分钟",
+    "interval_hours": "{count} 小时"
 }

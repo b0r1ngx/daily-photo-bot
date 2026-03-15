@@ -47,7 +47,7 @@ async def my_topics_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(
             t("topic_name_display", lang, name=escape_markdown(topic.name)),
             parse_mode="Markdown",
-            reply_markup=topic_manage_keyboard(topic),
+            reply_markup=topic_manage_keyboard(topic, lang),
         )
 
     return STATE_TOPIC_MANAGE
@@ -70,8 +70,13 @@ async def delete_topic_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
     topic_service: TopicService = context.bot_data["topic_service"]
 
+    user = await topic_service.ensure_user(
+        telegram_id=query.from_user.id,
+        username=query.from_user.username or '',
+        first_name=query.from_user.first_name or '',
+    )
     topic = await topic_service.get_topic(topic_id)
-    if not topic or topic.user_id != query.from_user.id:
+    if not topic or not user.id or topic.user_id != user.id:
         await query.edit_message_text(t("topic_not_found", lang))
         return STATE_TOPIC_MANAGE
 
@@ -108,8 +113,13 @@ async def rename_topic_callback(update: Update, context: ContextTypes.DEFAULT_TY
         return STATE_TOPIC_MANAGE
 
     topic_service: TopicService = context.bot_data["topic_service"]
+    user = await topic_service.ensure_user(
+        telegram_id=query.from_user.id,
+        username=query.from_user.username or '',
+        first_name=query.from_user.first_name or '',
+    )
     topic = await topic_service.get_topic(topic_id)
-    if not topic or topic.user_id != query.from_user.id:
+    if not topic or not user.id or topic.user_id != user.id:
         await query.edit_message_text(t("topic_not_found", lang))
         return STATE_TOPIC_MANAGE
 

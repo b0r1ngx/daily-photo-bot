@@ -5,6 +5,7 @@ import logging
 
 from telegram import Update
 from telegram.ext import ContextTypes
+from telegram.helpers import escape_markdown
 
 from src.config.constants import STATE_AWAITING_NEW_TOPIC, STATE_MAIN_MENU
 from src.config.i18n import t
@@ -86,7 +87,7 @@ async def receive_new_topic(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         return STATE_MAIN_MENU
 
     await update.message.reply_text(
-        t("topic_added", lang, name=topic.name),
+        t("topic_added", lang, name=escape_markdown(topic.name)),
         reply_markup=main_menu_keyboard(),
         parse_mode="Markdown",
     )

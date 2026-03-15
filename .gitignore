@@ -35,3 +35,6 @@ htmlcov/
 
 # MacOS specific
 .DS_Store
+
+# Local deploy helper
+deploy.sh

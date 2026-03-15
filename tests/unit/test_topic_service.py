@@ -92,3 +92,21 @@ async def test_rename_topic_invalid_name(service: TopicService) -> None:
 
     with pytest.raises(ValueError):
         await service.rename_topic(1, '!!!')
+
+
+@pytest.mark.asyncio
+async def test_get_topic_with_language(service: TopicService, topic_repo) -> None:
+    """get_topic_with_language delegates to repo.get_by_id_with_user_language."""
+    topic_repo.get_by_id_with_user_language.return_value = ("parrots", "en")
+    result = await service.get_topic_with_language(42)
+    assert result == ("parrots", "en")
+    topic_repo.get_by_id_with_user_language.assert_awaited_once_with(42)
+
+
+@pytest.mark.asyncio
+async def test_get_owner_telegram_id(service: TopicService, topic_repo) -> None:
+    """get_owner_telegram_id delegates to repo.get_owner_telegram_id."""
+    topic_repo.get_owner_telegram_id.return_value = 12345
+    result = await service.get_owner_telegram_id(42)
+    assert result == 12345
+    topic_repo.get_owner_telegram_id.assert_awaited_once_with(42)

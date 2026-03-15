@@ -44,6 +44,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     # Check if user already has topics
     topics = await topic_service.get_user_topics(db_user.id)
     if topics:
+        context.user_data.pop("paid_topic_pending", None)
         await update.message.reply_text(
             t("welcome_back", lang, count=len(topics)),
             reply_markup=main_menu_keyboard(),

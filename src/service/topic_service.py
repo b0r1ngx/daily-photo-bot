@@ -101,3 +101,13 @@ class TopicService:
                 "Use 1-50 characters: letters, numbers, spaces, hyphens."
             )
         await self._topic_repo.update_name(topic_id, cleaned)
+
+    async def get_topic_with_language(
+        self, topic_id: int,
+    ) -> tuple[str, str | None] | None:
+        """Get topic name and owner's language_code for scheduled jobs."""
+        return await self._topic_repo.get_by_id_with_user_language(topic_id)
+
+    async def get_owner_telegram_id(self, topic_id: int) -> int | None:
+        """Get Telegram ID of the topic's owner (for schedule reload)."""
+        return await self._topic_repo.get_owner_telegram_id(topic_id)

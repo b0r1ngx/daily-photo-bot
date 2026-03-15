@@ -7,6 +7,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from src.config.i18n import t
+from src.runtime.keyboards import main_menu_keyboard
 from src.service.payment_service import PaymentService
 
 logger = logging.getLogger(__name__)
@@ -52,4 +53,7 @@ async def successful_payment_callback(
     # Mark that user can add a paid topic
     context.user_data["paid_topic_pending"] = True
 
-    await update.message.reply_text(t("payment_success", _lang(update)))
+    await update.message.reply_text(
+        t("payment_success", _lang(update)),
+        reply_markup=main_menu_keyboard(),
+    )

@@ -84,6 +84,37 @@ class TopicRepo:
             raise ValueError(f'Topic {topic_id} not found or inactive')
         logger.info("Renamed topic_id=%d to '%s'", topic_id, new_name)
 
+    async def get_by_id_with_user_language(
+        self, topic_id: int,
+    ) -> tuple[str, str | None] | None:
+        """Get topic name and owner's language_code for an active topic.
+
+        Returns:
+            Tuple of (topic_name, language_code) or None if not found/inactive.
+        """
+        cursor = await self._db.execute(
+            "SELECT t.name, u.language_code "
+            "FROM topics t "
+            "JOIN users u ON t.user_id = u.id "
+            "WHERE t.id = ? AND t.is_active = 1",
+            (topic_id,),
+        )
+        row = await cursor.fetchone()
+        if not row:
+            return None
+        return (row[0], row[1])
+
+    async def get_owner_telegram_id(self, topic_id: int) -> int | None:
+        """Get the Telegram user ID of the topic owner."""
+        cursor = await self._db.execute(
+            "SELECT u.telegram_id FROM users u "
+            "JOIN topics t ON t.user_id = u.id "
+            "WHERE t.id = ? AND t.is_active = 1",
+            (topic_id,),
+        )
+        row = await cursor.fetchone()
+        return row[0] if row else None
+
     @staticmethod
     def _row_to_topic(row: aiosqlite.Row) -> Topic:
         return Topic(

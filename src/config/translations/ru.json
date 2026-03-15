@@ -35,7 +35,7 @@
     "schedule_fixed_set": "✅ Расписание настроено! Вы будете получать фото ежедневно в {time}.",
     "photo_caption": "📸 *{name}*\nФото: {photographer}, [{source}]({url})",
     "payment_failed": "Ошибка проверки оплаты.",
-    "payment_success": "✅ Оплата получена! Спасибо!\n\n📝 Теперь введите название новой темы:",
+    "payment_success": "✅ Оплата получена! Спасибо!\n\nНажмите ➕ Add topic, чтобы создать вашу новую тему.",
     "kb_add_topic": "➕ Add topic",
     "kb_schedule": "⏰ Schedule",
     "kb_my_topics": "📋 My Topics",

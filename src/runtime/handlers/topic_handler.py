@@ -36,6 +36,11 @@ async def add_topic_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(t("use_start_first", lang))
         return STATE_MAIN_MENU
 
+    # Check if user has a pending paid topic from completed payment
+    if context.user_data.get("paid_topic_pending"):
+        await update.message.reply_text(t("enter_new_topic", lang))
+        return STATE_AWAITING_NEW_TOPIC
+
     can_free = await topic_service.can_add_free_topic(user_id)
 
     if can_free:
@@ -69,8 +74,20 @@ async def receive_new_topic(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         await update.message.reply_text(t("use_start_first", lang))
         return STATE_MAIN_MENU
 
-    # Determine if this should be free or paid
-    is_free = await topic_service.can_add_free_topic(user_id)
+    # Consume paid flag if present (one payment = one topic)
+    paid_pending = context.user_data.pop("paid_topic_pending", False)
+
+    if paid_pending:
+        is_free = False
+    elif await topic_service.can_add_free_topic(user_id):
+        is_free = True
+    else:
+        # At limit and hasn't paid — reject
+        await update.message.reply_text(
+            t("topic_limit_reached", lang),
+            reply_markup=main_menu_keyboard(),
+        )
+        return STATE_MAIN_MENU
 
     try:
         topic = await topic_service.add_topic(

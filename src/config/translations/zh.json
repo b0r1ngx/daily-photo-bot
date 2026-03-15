@@ -35,7 +35,7 @@
     "schedule_fixed_set": "✅ 排程已设置！您将每天 {time} 收到一张照片。",
     "photo_caption": "📸 *{name}*\n摄影：{photographer}，来自 [{source}]({url})",
     "payment_failed": "支付验证失败。",
-    "payment_success": "✅ 已收到付款！谢谢！\n\n📝 现在请输入新主题的名称：",
+    "payment_success": "✅ 已收到付款！谢谢！\n\n请按 ➕ Add topic 创建您的新主题。",
     "kb_add_topic": "➕ Add topic",
     "kb_schedule": "⏰ Schedule",
     "kb_my_topics": "📋 My Topics",

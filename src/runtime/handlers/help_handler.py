@@ -45,6 +45,7 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Clean up any pending state
     context.user_data.pop("rename_topic_id", None)
+    context.user_data.pop("paid_topic_pending", None)
 
     await update.message.reply_text(
         t("action_cancelled", _lang(update)),

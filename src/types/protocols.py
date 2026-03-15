@@ -48,6 +48,14 @@ class TopicRepository(Protocol):
     async def update_name(self, topic_id: int, new_name: str) -> None:
         ...
 
+    async def get_by_id_with_user_language(
+        self, topic_id: int,
+    ) -> tuple[str, str | None] | None:
+        ...
+
+    async def get_owner_telegram_id(self, topic_id: int) -> int | None:
+        ...
+
 
 class ScheduleRepository(Protocol):
     """Interface for schedule data access."""

@@ -35,7 +35,7 @@
     "schedule_fixed_set": "✅ Schedule set! You'll receive a photo daily at {time}.",
     "photo_caption": "📸 *{name}*\nPhoto by {photographer} on [{source}]({url})",
     "payment_failed": "Payment verification failed.",
-    "payment_success": "✅ Payment received! Thank you!\n\n📝 Now type the name of your new topic:",
+    "payment_success": "✅ Payment received! Thank you!\n\nPress ➕ Add topic to create your new topic.",
     "kb_add_topic": "➕ Add topic",
     "kb_schedule": "⏰ Schedule",
     "kb_my_topics": "📋 My Topics",

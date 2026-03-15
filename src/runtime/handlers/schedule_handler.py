@@ -281,24 +281,14 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
     topic_id = job.data["topic_id"]
     photo_service: PhotoService = context.bot_data["photo_service"]
     schedule_service: ScheduleService = context.bot_data["schedule_service"]
+    topic_service: TopicService = context.bot_data["topic_service"]
 
-    # Resolve topic name and user language via direct DB query
-    # (acceptable shortcut for job callbacks)
-    db = context.bot_data["db"]
-    cursor = await db.execute(
-        "SELECT t.name, u.language_code "
-        "FROM topics t "
-        "JOIN users u ON t.user_id = u.id "
-        "WHERE t.id = ? AND t.is_active = 1",
-        (topic_id,),
-    )
-    row = await cursor.fetchone()
-    if not row:
+    result = await topic_service.get_topic_with_language(topic_id)
+    if not result:
         logger.warning("Topic %d not found or inactive, skipping.", topic_id)
         return
 
-    topic_name = row[0]
-    language_code = row[1]
+    topic_name, language_code = result
 
     try:
         photo = await photo_service.get_photo(

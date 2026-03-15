@@ -26,7 +26,12 @@ from src.config.constants import (
     STATE_SCHEDULE_TYPE,
 )
 from src.config.settings import TELEGRAM_BOT_TOKEN
-from src.runtime.handlers.help_handler import cancel_command, help_command, unknown_message
+from src.runtime.handlers.help_handler import (
+    cancel_command,
+    help_command,
+    unknown_message,
+    version_command,
+)
 from src.runtime.handlers.payment_handler import (
     pre_checkout_callback,
     successful_payment_callback,
@@ -91,6 +96,7 @@ def build_application() -> Application:  # type: ignore[type-arg]
         fallbacks=[
             CommandHandler("cancel", cancel_command),
             CommandHandler("start", start_command),
+            CommandHandler("version", version_command),
         ],
     )
 

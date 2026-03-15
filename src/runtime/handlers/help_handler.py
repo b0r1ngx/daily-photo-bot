@@ -4,7 +4,7 @@ from __future__ import annotations
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from src.config.constants import STATE_MAIN_MENU
+from src.config.constants import BOT_VERSION, STATE_MAIN_MENU
 from src.runtime.keyboards import main_menu_keyboard
 
 
@@ -18,6 +18,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "*Commands:*\n"
         "/start — Start the bot or show main menu\n"
         "/help — Show this help message\n"
+        "/version — Show bot version\n"
         "/cancel — Cancel current action\n\n"
         "*Menu options:*\n"
         "➕ *Add topic* — Add a new photo topic\n"
@@ -30,6 +31,15 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         parse_mode="Markdown",
         reply_markup=main_menu_keyboard(),
     )
+
+
+async def version_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle /version command — show bot version."""
+    if not update.message:
+        return STATE_MAIN_MENU
+
+    await update.message.reply_text(f'🤖 Daily Photo Bot v{BOT_VERSION}')
+    return STATE_MAIN_MENU
 
 
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:

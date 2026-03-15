@@ -101,6 +101,22 @@ async def select_schedule_type_callback(
         )
         return STATE_SCHEDULE_HOUR
 
+    if query.data == "stype_remove":
+        topic_id = context.user_data.get("schedule_topic_id")
+        if topic_id is None:
+            await query.edit_message_text("❌ Error: no topic selected.")
+            return STATE_MAIN_MENU
+
+        schedule_service: ScheduleService = context.bot_data["schedule_service"]
+        await schedule_service.remove_schedule(topic_id)
+        _remove_job(context, f"photo_{topic_id}")
+
+        await query.edit_message_text(
+            "✅ Schedule removed! You won't receive photos for this topic "
+            "until you set a new schedule.",
+        )
+        return STATE_MAIN_MENU
+
     return STATE_SCHEDULE_TYPE
 
 

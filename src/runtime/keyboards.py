@@ -35,6 +35,7 @@ def schedule_type_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("⏱ Every X minutes", callback_data="stype_interval")],
         [InlineKeyboardButton("🕐 At specific time", callback_data="stype_fixed")],
+        [InlineKeyboardButton("🗑 Remove schedule", callback_data="stype_remove")],
     ])
 
 

@@ -8,6 +8,7 @@ from telegram.ext import ContextTypes
 
 from src.config.constants import STATE_AWAITING_TOPIC, STATE_MAIN_MENU
 from src.runtime.keyboards import main_menu_keyboard
+from src.service.photo_service import PhotoService
 from src.service.topic_service import TopicService
 
 logger = logging.getLogger(__name__)
@@ -66,9 +67,26 @@ async def receive_first_topic(update: Update, context: ContextTypes.DEFAULT_TYPE
         return STATE_AWAITING_TOPIC
 
     await update.message.reply_text(
-        f"✅ Great! I'll send you photos of *{topic.name}*.\n\n"
-        "Now set up a schedule using the menu below!",
+        f"✅ Great! Topic *{topic.name}* added!\n\n"
+        '⏰ *Important:* Now set up a schedule using the *"⏰ Schedule"* button below '
+        "to start receiving photos. Without a schedule, no photos will be sent!",
         reply_markup=main_menu_keyboard(),
         parse_mode="Markdown",
     )
+
+    # Send first photo as a preview (best-effort, don't break the flow)
+    try:
+        photo_service: PhotoService = context.bot_data["photo_service"]
+        photo = await photo_service.get_photo(topic=topic.name, topic_id=topic.id)
+        await update.message.reply_photo(
+            photo=photo.url,
+            caption=(
+                f"📸 *{topic.name}*\n\n"
+                "Here's your first photo! Set up a schedule to receive more."
+            ),
+            parse_mode="Markdown",
+        )
+    except Exception:
+        logger.debug("Could not send first preview photo for topic '%s'", topic.name)
+
     return STATE_MAIN_MENU

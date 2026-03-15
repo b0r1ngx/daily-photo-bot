@@ -48,3 +48,27 @@ async def test_get_by_telegram_id_found(repo: UserRepo):
     result = await repo.get_by_telegram_id(12345)
     assert result is not None
     assert result.telegram_id == 12345
+
+
+@pytest.mark.asyncio
+async def test_get_or_create_with_language_code(repo: UserRepo):
+    user = await repo.get_or_create(
+        telegram_id=12345, username="testuser", first_name="Test", language_code="en"
+    )
+    assert user.language_code == "en"
+
+
+@pytest.mark.asyncio
+async def test_get_or_create_without_language_code(repo: UserRepo):
+    user = await repo.get_or_create(telegram_id=12345, username="testuser")
+    assert user.language_code is None
+
+
+@pytest.mark.asyncio
+async def test_update_language_code(repo: UserRepo):
+    user = await repo.get_or_create(telegram_id=12345, language_code="en")
+    assert user.language_code == "en"
+    await repo.update_language_code(user.id, "ru")
+    updated = await repo.get_by_telegram_id(12345)
+    assert updated is not None
+    assert updated.language_code == "ru"

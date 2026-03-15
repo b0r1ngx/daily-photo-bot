@@ -19,6 +19,7 @@ class UserRepository(Protocol):
         telegram_id: int,
         username: str | None = None,
         first_name: str | None = None,
+        language_code: str | None = None,
     ) -> User:
         ...
 

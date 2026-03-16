@@ -1,5 +1,7 @@
 """Application constants. Layer: Config (depends on: types only)."""
 
+BOT_VERSION: str = '0.2.0'
+
 # Schedule interval options (label, seconds)
 SCHEDULE_INTERVALS: list[tuple[str, int]] = [
     ("5 min", 300),
@@ -38,8 +40,11 @@ STATE_SCHEDULE_TYPE: int = 4
 STATE_SCHEDULE_INTERVAL: int = 5
 STATE_SCHEDULE_HOUR: int = 6
 STATE_SCHEDULE_MINUTE: int = 7
+STATE_TOPIC_MANAGE: int = 8
+STATE_EDIT_TOPIC_NAME: int = 9
 
 # Keyboard labels (used for matching in handlers)
 KB_ADD_TOPIC: str = "➕ Add topic"
+KB_MY_TOPICS: str = "📋 My Topics"
 KB_SCHEDULE: str = "⏰ Schedule"
 KB_BACK: str = "◀️ Back"

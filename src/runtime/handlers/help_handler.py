@@ -4,8 +4,14 @@ from __future__ import annotations
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from src.config.constants import STATE_MAIN_MENU
+from src.config.constants import BOT_VERSION, STATE_MAIN_MENU
+from src.config.i18n import t
 from src.runtime.keyboards import main_menu_keyboard
+
+
+def _lang(update: Update) -> str | None:
+    """Extract language_code from the effective user."""
+    return update.effective_user.language_code if update.effective_user else None
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -14,22 +20,22 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
 
     await update.message.reply_text(
-        "📸 *Daily Photo Bot — Help*\n\n"
-        "*Commands:*\n"
-        "/start — Start the bot or show main menu\n"
-        "/help — Show this help message\n"
-        "/cancel — Cancel current action\n\n"
-        "*Menu options:*\n"
-        "➕ *Add topic* — Add a new photo topic\n"
-        "⏰ *Schedule* — Set up delivery schedule for your topics\n\n"
-        "*How it works:*\n"
-        "1. Choose a topic (e.g., parrots, mountains)\n"
-        "2. Set a schedule (every X minutes or at a specific time)\n"
-        "3. Receive beautiful photos automatically!\n\n"
-        "💰 You get 1 free topic. Additional topics cost Telegram Stars.",
+        t("help_text", _lang(update)),
         parse_mode="Markdown",
         reply_markup=main_menu_keyboard(),
     )
+
+
+async def version_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int | None:
+    """Handle /version command — show bot version."""
+    if not update.message:
+        return None
+
+    await update.message.reply_text(
+        t("version_text", _lang(update), version=BOT_VERSION),
+        reply_markup=main_menu_keyboard(),
+    )
+    return None
 
 
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -37,8 +43,12 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not update.message:
         return STATE_MAIN_MENU
 
+    # Clean up any pending state
+    context.user_data.pop("rename_topic_id", None)
+    context.user_data.pop("paid_topic_pending", None)
+
     await update.message.reply_text(
-        "↩️ Action cancelled. Use the menu below.",
+        t("action_cancelled", _lang(update)),
         reply_markup=main_menu_keyboard(),
     )
     return STATE_MAIN_MENU
@@ -50,7 +60,7 @@ async def unknown_message(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return STATE_MAIN_MENU
 
     await update.message.reply_text(
-        "🤔 I don't understand. Use the menu buttons below:",
+        t("unknown_message", _lang(update)),
         reply_markup=main_menu_keyboard(),
     )
     return STATE_MAIN_MENU

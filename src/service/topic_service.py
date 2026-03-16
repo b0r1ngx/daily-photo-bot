@@ -27,9 +27,12 @@ class TopicService:
         telegram_id: int,
         username: str | None = None,
         first_name: str | None = None,
+        language_code: str | None = None,
     ) -> User:
         """Get or create a user."""
-        return await self._user_repo.get_or_create(telegram_id, username, first_name)
+        return await self._user_repo.get_or_create(
+            telegram_id, username, first_name, language_code
+        )
 
     async def add_topic(self, user_id: int, name: str, is_free: bool = True) -> Topic:
         """Add a new topic for a user.
@@ -60,6 +63,10 @@ class TopicService:
 
         return await self._topic_repo.create(user_id, cleaned, is_free)
 
+    async def get_topic(self, topic_id: int) -> Topic | None:
+        """Get a single active topic by ID."""
+        return await self._topic_repo.get_by_id(topic_id)
+
     async def get_user_topics(self, user_id: int) -> list[Topic]:
         """Get all active topics for a user."""
         return await self._topic_repo.get_by_user(user_id)
@@ -76,3 +83,31 @@ class TopicService:
     async def remove_topic(self, topic_id: int) -> None:
         """Soft-delete a topic."""
         await self._topic_repo.delete(topic_id)
+
+    async def rename_topic(self, topic_id: int, new_name: str) -> None:
+        """Rename an active topic.
+
+        Args:
+            topic_id: Database topic ID.
+            new_name: New topic name.
+
+        Raises:
+            ValueError: If the new name is invalid.
+        """
+        cleaned = new_name.strip()
+        if not cleaned or not _TOPIC_NAME_PATTERN.match(cleaned):
+            raise ValueError(
+                f"Invalid topic name: '{new_name}'. "
+                "Use 1-50 characters: letters, numbers, spaces, hyphens."
+            )
+        await self._topic_repo.update_name(topic_id, cleaned)
+
+    async def get_topic_with_language(
+        self, topic_id: int,
+    ) -> tuple[str, str | None] | None:
+        """Get topic name and owner's language_code for scheduled jobs."""
+        return await self._topic_repo.get_by_id_with_user_language(topic_id)
+
+    async def get_owner_telegram_id(self, topic_id: int) -> int | None:
+        """Get Telegram ID of the topic's owner (for schedule reload)."""
+        return await self._topic_repo.get_owner_telegram_id(topic_id)

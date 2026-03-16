@@ -21,6 +21,7 @@ class UserRepo:
         telegram_id: int,
         username: str | None = None,
         first_name: str | None = None,
+        language_code: str | None = None,
     ) -> User:
         """Get existing user or create a new one."""
         row = await self._fetch_by_telegram_id(telegram_id)
@@ -28,8 +29,9 @@ class UserRepo:
             return self._row_to_user(row)
 
         await self._db.execute(
-            "INSERT INTO users (telegram_id, username, first_name) VALUES (?, ?, ?)",
-            (telegram_id, username, first_name),
+            "INSERT INTO users (telegram_id, username, first_name, language_code) "
+            "VALUES (?, ?, ?, ?)",
+            (telegram_id, username, first_name, language_code),
         )
         await self._db.commit()
         logger.info("Created new user: telegram_id=%d", telegram_id)
@@ -46,7 +48,7 @@ class UserRepo:
 
     async def _fetch_by_telegram_id(self, telegram_id: int) -> aiosqlite.Row | None:
         cursor = await self._db.execute(
-            "SELECT id, telegram_id, username, first_name, created_at "
+            "SELECT id, telegram_id, username, first_name, language_code, created_at "
             "FROM users WHERE telegram_id = ?",
             (telegram_id,),
         )
@@ -59,5 +61,14 @@ class UserRepo:
             telegram_id=row[1],
             username=row[2],
             first_name=row[3],
-            created_at=row[4],
+            language_code=row[4],
+            created_at=row[5],
         )
+
+    async def update_language_code(self, user_id: int, language_code: str) -> None:
+        """Update the language code for an existing user."""
+        await self._db.execute(
+            "UPDATE users SET language_code = ? WHERE id = ?",
+            (language_code, user_id),
+        )
+        await self._db.commit()

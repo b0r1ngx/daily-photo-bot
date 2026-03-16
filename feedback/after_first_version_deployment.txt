@@ -1,0 +1,18 @@
+1. Is we have, anywhere, a version iterations? Lets make it for developers only, to understand it
+
+2. After user sends his first topic and you answer to him to set a schedule, lets immideatly after that messages sends a first photo to him.
+
+3. Lets update a bot message that appears in user chat after he sends his first topic, to be more clear and friendly. For example, we can say something like "Great! Now let's set up a schedule for your daily photos. When would you like to receive them? Because if you not set up a schedule you dont receive photos at all"
+
+4. Lets add internalization i think using i18n, to translate the app to other languages, and make it more accessible for users around the world. For example lets do it for 10 most popular languages, and then we can add more as needed.
+
+5. remove default schedule to user if it exists, so if user don't set a schedule he don't get a photo at all. I'd like this, because also lets make a feature here, when user wants to update his schedule to a topic, i want to add a one more button that will allows him to remove schedule, so photos by this topic will not came anymore (to the time user again not update a schedule).
+
+6. Allow users to edit (and delete) topics after they have been created. This will give users more flexibility and control over their content. We can add an "Edit" button next to each topic in the user's dashboard, which will allow them to modify the topic's title, description, and schedule. This way, users can easily update their topics without having to delete and recreate them.
+
+7. Also i get a feedback about images from three users:
+7.1. Topic: "Parrots", awesome images, funny, all good, i like it! That's what I wanted!
+7.2. Topic: "figure skating", photos are incorrect, the first photo was a child on an ice, and the second is: skateboarder not at ice at all.
+7.3. Topic: "Вася Ложкин", this is a Russian artist, and the photos were not relevant to his style at all, they were more like random abstract images. I searched on unsplash it give's to me a zero search results, so i think we need to improve our image generation algorithm for any abstract or concrete topics, to make it more accurate and relevant to the user's topic. (Add more source where we get images)
+
+What i think about feedback on 7 point, I think we need to improve our image generation algorithm, to make it more accurate and relevant to the user's topic. We can also add a feature that allows users to provide feedback on the images they receive, so we can continuously improve our service. Additionally, we can consider implementing a machine learning model that learns from user feedback and improves the image generation over time.

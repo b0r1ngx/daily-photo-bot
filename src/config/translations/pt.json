@@ -46,5 +46,9 @@
     "btn_rename": "✏️ Renomear",
     "btn_delete": "🗑 Excluir",
     "interval_minutes": "{count} minutos",
-    "interval_hours": "{count} horas"
+    "interval_hours": "{count} horas",
+    "photo_no_topics": "Você ainda não tem nenhum tema. Use /start para adicionar!",
+    "photo_error": "Desculpe, não foi possível buscar uma foto agora. Tente mais tarde.",
+    "stop_success": "✅ {count} agendamento(s) parado(s). Você não receberá fotos automáticas até configurar um novo.",
+    "stop_no_schedules": "Você não tem agendamentos ativos para parar."
 }

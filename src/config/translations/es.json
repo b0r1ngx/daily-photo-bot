@@ -46,5 +46,9 @@
     "btn_rename": "✏️ Renombrar",
     "btn_delete": "🗑 Eliminar",
     "interval_minutes": "{count} minutos",
-    "interval_hours": "{count} horas"
+    "interval_hours": "{count} horas",
+    "photo_no_topics": "No tienes ningún tema todavía. ¡Usa /start para añadir uno!",
+    "photo_error": "Lo siento, no pude obtener una foto ahora. Inténtalo más tarde.",
+    "stop_success": "✅ Se detuvieron {count} horario(s). No recibirás fotos automáticas hasta configurar uno nuevo.",
+    "stop_no_schedules": "No tienes horarios activos para detener."
 }

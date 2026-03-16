@@ -64,4 +64,8 @@ MessageKey = Literal[
     "btn_delete",
     "interval_minutes",
     "interval_hours",
+    "photo_no_topics",
+    "photo_error",
+    "stop_success",
+    "stop_no_schedules",
 ]

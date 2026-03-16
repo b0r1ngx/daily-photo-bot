@@ -1,4 +1,5 @@
 """Application builder and handler registration. Layer: Runtime."""
+
 from __future__ import annotations
 
 import re
@@ -39,6 +40,7 @@ from src.runtime.handlers.payment_handler import (
     pre_checkout_callback,
     successful_payment_callback,
 )
+from src.runtime.handlers.quick_commands_handler import photo_command, stop_command
 from src.runtime.handlers.schedule_handler import (
     schedule_menu,
     select_hour_callback,
@@ -86,26 +88,20 @@ def build_application() -> Application:  # type: ignore[type-arg]
                 CallbackQueryHandler(select_topic_callback, pattern=r"^topic_\d+$"),
             ],
             STATE_SCHEDULE_TYPE: [
-                CallbackQueryHandler(
-                    select_schedule_type_callback, pattern=r"^stype_"
-                ),
+                CallbackQueryHandler(select_schedule_type_callback, pattern=r"^stype_"),
             ],
             STATE_SCHEDULE_INTERVAL: [
-                CallbackQueryHandler(
-                    select_interval_callback, pattern=r"^interval_\d+$"
-                ),
+                CallbackQueryHandler(select_interval_callback, pattern=r"^interval_\d+$"),
             ],
             STATE_SCHEDULE_HOUR: [
                 CallbackQueryHandler(select_hour_callback, pattern=r"^hour_\d+$"),
             ],
             STATE_SCHEDULE_MINUTE: [
-                CallbackQueryHandler(
-                    select_minute_callback, pattern=r"^minute_\d+$"
-                ),
+                CallbackQueryHandler(select_minute_callback, pattern=r"^minute_\d+$"),
             ],
             STATE_TOPIC_MANAGE: [
-                CallbackQueryHandler(delete_topic_callback, pattern=r'^delete_\d+$'),
-                CallbackQueryHandler(rename_topic_callback, pattern=r'^rename_\d+$'),
+                CallbackQueryHandler(delete_topic_callback, pattern=r"^delete_\d+$"),
+                CallbackQueryHandler(rename_topic_callback, pattern=r"^rename_\d+$"),
             ],
             STATE_EDIT_TOPIC_NAME: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_new_topic_name),
@@ -115,6 +111,8 @@ def build_application() -> Application:  # type: ignore[type-arg]
             CommandHandler("cancel", cancel_command),
             CommandHandler("start", start_command),
             CommandHandler("version", version_command),
+            CommandHandler("photo", photo_command),
+            CommandHandler("stop", stop_command),
         ],
     )
 
@@ -125,8 +123,6 @@ def build_application() -> Application:  # type: ignore[type-arg]
 
     # Payment handlers (must be outside conversation handler)
     app.add_handler(PreCheckoutQueryHandler(pre_checkout_callback))
-    app.add_handler(
-        MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback)
-    )
+    app.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
 
     return app

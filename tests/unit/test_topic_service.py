@@ -1,4 +1,5 @@
 """Unit tests for TopicService."""
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
@@ -77,21 +78,21 @@ async def test_can_add_free_topic(service: TopicService, topic_repo):
 @pytest.mark.asyncio
 async def test_rename_topic_success(service: TopicService, topic_repo) -> None:
     """Test renaming a topic with valid name."""
-    await service.rename_topic(1, 'new name')
-    topic_repo.update_name.assert_called_once_with(1, 'new name')
+    await service.rename_topic(1, "new name")
+    topic_repo.update_name.assert_awaited_once_with(1, "new name")
 
 
 @pytest.mark.asyncio
 async def test_rename_topic_invalid_name(service: TopicService) -> None:
     """Test renaming with invalid name raises ValueError."""
     with pytest.raises(ValueError):
-        await service.rename_topic(1, '')
+        await service.rename_topic(1, "")
 
     with pytest.raises(ValueError):
-        await service.rename_topic(1, 'a' * 51)
+        await service.rename_topic(1, "a" * 51)
 
     with pytest.raises(ValueError):
-        await service.rename_topic(1, '!!!')
+        await service.rename_topic(1, "!!!")
 
 
 @pytest.mark.asyncio

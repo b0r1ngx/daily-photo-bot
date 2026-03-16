@@ -1,4 +1,5 @@
 """Help and cancel handlers. Layer: Runtime."""
+
 from __future__ import annotations
 
 from telegram import Update
@@ -21,7 +22,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     await update.message.reply_text(
         t("help_text", _lang(update)),
-        parse_mode="Markdown",
+        parse_mode="MarkdownV2",
         reply_markup=main_menu_keyboard(),
     )
 

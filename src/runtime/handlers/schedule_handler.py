@@ -1,4 +1,5 @@
 """Schedule configuration handler. Layer: Runtime."""
+
 from __future__ import annotations
 
 import datetime
@@ -17,6 +18,7 @@ from src.config.constants import (
     STATE_SCHEDULE_TYPE,
 )
 from src.config.i18n import t
+from src.runtime.job_utils import remove_job
 from src.runtime.keyboards import (
     hour_keyboard,
     interval_keyboard,
@@ -64,9 +66,7 @@ async def schedule_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     return STATE_SCHEDULE_SELECT_TOPIC
 
 
-async def select_topic_callback(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> int:
+async def select_topic_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle topic selection from inline keyboard."""
     query = update.callback_query
     if not query or not query.data:
@@ -87,9 +87,7 @@ async def select_topic_callback(
     return STATE_SCHEDULE_TYPE
 
 
-async def select_schedule_type_callback(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> int:
+async def select_schedule_type_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle schedule type selection (interval or fixed time)."""
     query = update.callback_query
     if not query or not query.data:
@@ -121,9 +119,9 @@ async def select_schedule_type_callback(
 
         schedule_service: ScheduleService = context.bot_data["schedule_service"]
         await schedule_service.remove_schedule(topic_id)
-        _remove_job(context, f"photo_{topic_id}")
+        remove_job(f"photo_{topic_id}", context)
 
-        await query.edit_message_text(t("schedule_removed", lang))
+        await query.edit_message_text(t("schedule_removed", lang), parse_mode="MarkdownV2")
         await context.bot.send_message(
             chat_id=query.from_user.id,
             text=t("menu_continue", lang),
@@ -134,9 +132,7 @@ async def select_schedule_type_callback(
     return STATE_SCHEDULE_TYPE
 
 
-async def select_interval_callback(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> int:
+async def select_interval_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle interval selection."""
     query = update.callback_query
     if not query or not query.data:
@@ -162,13 +158,12 @@ async def select_interval_callback(
 
     await query.edit_message_text(
         t("schedule_interval_set", lang, interval=_format_interval(seconds, lang)),
+        parse_mode="MarkdownV2",
     )
     return STATE_MAIN_MENU
 
 
-async def select_hour_callback(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> int:
+async def select_hour_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle hour selection for fixed-time schedule."""
     query = update.callback_query
     if not query or not query.data:
@@ -188,9 +183,7 @@ async def select_hour_callback(
     return STATE_SCHEDULE_MINUTE
 
 
-async def select_minute_callback(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> int:
+async def select_minute_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle minute selection for fixed-time schedule."""
     query = update.callback_query
     if not query or not query.data:
@@ -209,9 +202,7 @@ async def select_minute_callback(
         return STATE_MAIN_MENU
 
     schedule_service: ScheduleService = context.bot_data["schedule_service"]
-    await schedule_service.set_fixed_time_schedule(
-        topic_id=topic_id, hour=hour, minute=minute
-    )
+    await schedule_service.set_fixed_time_schedule(topic_id=topic_id, hour=hour, minute=minute)
 
     # Register the daily job
     chat_id = update.effective_chat.id if update.effective_chat else None
@@ -219,6 +210,7 @@ async def select_minute_callback(
 
     await query.edit_message_text(
         t("schedule_fixed_set", lang, time=f"{hour:02d}:{minute:02d}"),
+        parse_mode="MarkdownV2",
     )
     return STATE_MAIN_MENU
 
@@ -231,7 +223,7 @@ def _register_interval_job(
 ) -> None:
     """Register a repeating job for interval-based schedule."""
     job_name = f"photo_{topic_id}"
-    _remove_job(context, job_name)
+    remove_job(job_name, context)
     context.job_queue.run_repeating(  # type: ignore[union-attr]
         _send_scheduled_photo,
         interval=seconds,
@@ -251,7 +243,7 @@ def _register_daily_job(
 ) -> None:
     """Register a daily job for fixed-time schedule."""
     job_name = f"photo_{topic_id}"
-    _remove_job(context, job_name)
+    remove_job(job_name, context)
     context.job_queue.run_daily(  # type: ignore[union-attr]
         _send_scheduled_photo,
         time=datetime.time(hour=hour, minute=minute),
@@ -259,15 +251,6 @@ def _register_daily_job(
         data={"topic_id": topic_id},
         chat_id=chat_id,
     )
-
-
-def _remove_job(context: ContextTypes.DEFAULT_TYPE, name: str) -> None:
-    """Remove existing job by name if it exists."""
-    if not context.job_queue:
-        return
-    current_jobs = context.job_queue.get_jobs_by_name(name)
-    for job in current_jobs:
-        job.schedule_removal()
 
 
 async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -292,19 +275,25 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
 
     try:
         photo = await photo_service.get_photo(
-            topic=topic_name, topic_id=topic_id, language_code=language_code,
+            topic=topic_name,
+            topic_id=topic_id,
+            language_code=language_code,
         )
     except Exception:
         logger.exception("Failed to fetch photo for topic '%s'", topic_name)
         return
 
+    photographer = escape_markdown(photo.photographer, version=2)
+    source_display = escape_markdown(photo.source.title(), version=2)
+    url_safe = photo.source_url.replace("\\", "\\\\").replace(")", "\\)")
+    source_with_link = f"[{source_display}]({url_safe})"
+
     caption = t(
         "photo_caption",
         language_code,
-        name=escape_markdown(topic_name),
-        photographer=photo.photographer,
-        source=photo.source.title(),
-        url=photo.source_url,
+        name=escape_markdown(topic_name, version=2),
+        photographer=photographer,
+        source=source_with_link,
     )
 
     try:
@@ -312,7 +301,7 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
             chat_id=job.chat_id,
             photo=photo.url,
             caption=caption,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",
         )
     except Exception:
         logger.exception("Failed to send photo to chat %d", job.chat_id)
@@ -327,6 +316,6 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
 def _format_interval(seconds: int, language_code: str | None = None) -> str:
     """Format seconds into a localized human-readable interval string."""
     if seconds < 3600:
-        return t('interval_minutes', language_code, count=seconds // 60)
+        return t("interval_minutes", language_code, count=seconds // 60)
     hours = seconds // 3600
-    return t('interval_hours', language_code, count=hours)
+    return t("interval_hours", language_code, count=hours)

@@ -1,4 +1,5 @@
 """User repository. Layer: Repo (depends on: types, config)."""
+
 from __future__ import annotations
 
 import logging
@@ -26,7 +27,12 @@ class UserRepo:
         """Get existing user or create a new one."""
         row = await self._fetch_by_telegram_id(telegram_id)
         if row:
-            return self._row_to_user(row)
+            user = self._row_to_user(row)
+            if language_code is not None and language_code != user.language_code:
+                await self.update_language_code(user.id, language_code)
+                row = await self._fetch_by_telegram_id(telegram_id)
+                return self._row_to_user(row)  # type: ignore[arg-type]
+            return user
 
         await self._db.execute(
             "INSERT INTO users (telegram_id, username, first_name, language_code) "

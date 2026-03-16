@@ -1,4 +1,5 @@
 """Start/onboarding handler. Layer: Runtime."""
+
 from __future__ import annotations
 
 import logging
@@ -76,9 +77,9 @@ async def receive_first_topic(update: Update, context: ContextTypes.DEFAULT_TYPE
         return STATE_AWAITING_TOPIC
 
     await update.message.reply_text(
-        t("topic_added_with_schedule_hint", lang, name=escape_markdown(topic.name)),
+        t("topic_added_with_schedule_hint", lang, name=escape_markdown(topic.name, version=2)),
         reply_markup=main_menu_keyboard(),
-        parse_mode="Markdown",
+        parse_mode="MarkdownV2",
     )
 
     # Send first photo as a preview (best-effort, don't break the flow)
@@ -86,12 +87,14 @@ async def receive_first_topic(update: Update, context: ContextTypes.DEFAULT_TYPE
         try:
             photo_service: PhotoService = context.bot_data["photo_service"]
             photo = await photo_service.get_photo(
-                topic=topic.name, topic_id=topic.id, language_code=lang,
+                topic=topic.name,
+                topic_id=topic.id,
+                language_code=lang,
             )
             await update.message.reply_photo(
                 photo=photo.url,
-                caption=t("first_photo_caption", lang, name=escape_markdown(topic.name)),
-                parse_mode="Markdown",
+                caption=t("first_photo_caption", lang, name=escape_markdown(topic.name, version=2)),
+                parse_mode="MarkdownV2",
             )
         except (PhotoNotFoundError, PhotoSourceError, httpx.HTTPError, TelegramError) as exc:
             logger.warning("Could not send first preview photo for topic '%s': %s", topic.name, exc)

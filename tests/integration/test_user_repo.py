@@ -1,4 +1,5 @@
 """Integration tests for UserRepo using in-memory SQLite."""
+
 import aiosqlite
 import pytest
 
@@ -72,3 +73,19 @@ async def test_update_language_code(repo: UserRepo):
     updated = await repo.get_by_telegram_id(12345)
     assert updated is not None
     assert updated.language_code == "ru"
+
+
+@pytest.mark.asyncio
+async def test_get_or_create_updates_language_for_existing_user(repo: UserRepo):
+    user = await repo.get_or_create(telegram_id=12345, language_code="en")
+    assert user.language_code == "en"
+    updated = await repo.get_or_create(telegram_id=12345, language_code="ru")
+    assert updated.language_code == "ru"
+
+
+@pytest.mark.asyncio
+async def test_get_or_create_preserves_language_when_none(repo: UserRepo):
+    user = await repo.get_or_create(telegram_id=12345, language_code="ru")
+    assert user.language_code == "ru"
+    same_user = await repo.get_or_create(telegram_id=12345, language_code=None)
+    assert same_user.language_code == "ru"

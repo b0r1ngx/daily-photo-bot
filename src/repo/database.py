@@ -1,7 +1,9 @@
 """Database initialization and connection management. Layer: Repo (depends on: types, config)."""
+
 from __future__ import annotations
 
 import logging
+import sqlite3
 from pathlib import Path
 
 import aiosqlite
@@ -103,12 +105,10 @@ async def run_migrations(db: aiosqlite.Connection) -> None:
 
         try:
             await db.execute(sql)
-            await db.execute(
-                "INSERT INTO schema_version (version) VALUES (?)", (version,)
-            )
+            await db.execute("INSERT INTO schema_version (version) VALUES (?)", (version,))
             await db.commit()
             logger.info("Applied migration v%d.", version)
-        except Exception:
+        except sqlite3.OperationalError:
             # Column may already exist (e.g. fresh DB created with updated DDL).
             # SQLite raises OperationalError for duplicate ALTER TABLE ADD COLUMN.
             await db.rollback()

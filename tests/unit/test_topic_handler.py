@@ -1,4 +1,5 @@
 """Unit tests for topic_handler — paid topic flow."""
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
@@ -12,6 +13,7 @@ from src.types.user import Topic
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def topic_service() -> AsyncMock:
@@ -56,8 +58,11 @@ def update() -> MagicMock:
 # add_topic_menu tests
 # ---------------------------------------------------------------------------
 
+
 async def test_add_topic_menu_paid_pending_skips_invoice(
-    update, context, topic_service,
+    update,
+    context,
+    topic_service,
 ):
     """When paid_topic_pending is set, go straight to topic name input."""
     context.user_data["paid_topic_pending"] = True
@@ -75,27 +80,37 @@ async def test_add_topic_menu_paid_pending_skips_invoice(
 # receive_new_topic tests
 # ---------------------------------------------------------------------------
 
+
 async def test_receive_new_topic_paid_pending_creates_paid_topic(
-    update, context, topic_service,
+    update,
+    context,
+    topic_service,
 ):
     """With paid_topic_pending, topic is created with is_free=False and flag is consumed."""
     context.user_data["paid_topic_pending"] = True
     topic_service.add_topic.return_value = Topic(
-        id=2, user_id=1, name="parrots", is_free=False,
+        id=2,
+        user_id=1,
+        name="parrots",
+        is_free=False,
     )
 
     result = await receive_new_topic(update, context)
 
     assert result == STATE_MAIN_MENU
     topic_service.add_topic.assert_awaited_once_with(
-        user_id=1, name="parrots", is_free=False,
+        user_id=1,
+        name="parrots",
+        is_free=False,
     )
     # Flag must be consumed (popped)
     assert "paid_topic_pending" not in context.user_data
 
 
 async def test_receive_new_topic_at_limit_without_payment_rejects(
-    update, context, topic_service,
+    update,
+    context,
+    topic_service,
 ):
     """At free limit without paid_topic_pending, user is rejected."""
     topic_service.can_add_free_topic.return_value = False
@@ -107,7 +122,9 @@ async def test_receive_new_topic_at_limit_without_payment_rejects(
 
 
 async def test_receive_new_topic_free_capacity_creates_free_topic(
-    update, context, topic_service,
+    update,
+    context,
+    topic_service,
 ):
     """With free capacity and no payment flag, topic is created as free."""
     topic_service.can_add_free_topic.return_value = True
@@ -116,17 +133,24 @@ async def test_receive_new_topic_free_capacity_creates_free_topic(
 
     assert result == STATE_MAIN_MENU
     topic_service.add_topic.assert_awaited_once_with(
-        user_id=1, name="parrots", is_free=True,
+        user_id=1,
+        name="parrots",
+        is_free=True,
     )
 
 
 async def test_paid_flag_consumed_only_once(
-    update, context, topic_service,
+    update,
+    context,
+    topic_service,
 ):
     """One payment allows exactly one paid topic — second call is subject to free check."""
     context.user_data["paid_topic_pending"] = True
     topic_service.add_topic.return_value = Topic(
-        id=2, user_id=1, name="parrots", is_free=False,
+        id=2,
+        user_id=1,
+        name="parrots",
+        is_free=False,
     )
 
     # First call: consumes the flag
@@ -147,6 +171,7 @@ async def test_paid_flag_consumed_only_once(
 # cancel_command tests
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_cancel_command_clears_paid_topic_pending():
     """cancel_command must clean up paid_topic_pending flag."""
@@ -162,4 +187,4 @@ async def test_cancel_command_clears_paid_topic_pending():
     await cancel_command(update, context)
 
     assert "paid_topic_pending" not in context.user_data
-    update.message.reply_text.assert_called_once()
+    update.message.reply_text.assert_awaited_once()

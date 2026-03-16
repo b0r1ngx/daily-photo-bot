@@ -2,7 +2,7 @@
 
 A Telegram bot that sends users photos based on chosen topics on a configurable schedule.
 
-**Version:** 0.2.0
+**Version:** 0.2.3
 
 ## Features
 

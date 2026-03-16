@@ -11,7 +11,7 @@ from telegram.helpers import escape_markdown
 
 from src.config.constants import STATE_MAIN_MENU
 from src.config.i18n import t
-from src.runtime.handlers.schedule_handler import _remove_job  # TODO: extract to shared utils
+from src.runtime.job_utils import remove_job
 from src.runtime.keyboards import main_menu_keyboard
 from src.service.photo_service import PhotoService
 from src.service.schedule_service import ScheduleService
@@ -76,20 +76,24 @@ async def photo_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         )
         return None
 
+    photographer = escape_markdown(photo.photographer, version=2)
+    source_display = escape_markdown(photo.source.title(), version=2)
+    url_safe = photo.source_url.replace("\\", "\\\\").replace(")", "\\)")
+    source_with_link = f"[{source_display}]({url_safe})"
+
     caption = t(
         "photo_caption",
         language_code,
-        name=escape_markdown(topic_name),
-        photographer=photo.photographer,
-        source=photo.source.title(),
-        url=photo.source_url,
+        name=escape_markdown(topic_name, version=2),
+        photographer=photographer,
+        source=source_with_link,
     )
 
     try:
         await update.message.reply_photo(
             photo=photo.url,
             caption=caption,
-            parse_mode="Markdown",
+            parse_mode="MarkdownV2",
         )
     except Exception:
         logger.exception("Failed to send photo to user")
@@ -124,7 +128,7 @@ async def stop_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
             schedule = await schedule_service.get_schedule(topic.id)
             if schedule and schedule.is_active:
                 await schedule_service.remove_schedule(topic.id)
-                _remove_job(context, f"photo_{topic.id}")
+                remove_job(f"photo_{topic.id}", context)
                 stopped_count += 1
         except Exception:
             logger.exception(
@@ -140,6 +144,7 @@ async def stop_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     else:
         await update.message.reply_text(
             t("stop_success", lang, count=stopped_count),
+            parse_mode="MarkdownV2",
             reply_markup=main_menu_keyboard(),
         )
 

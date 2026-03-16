@@ -1,4 +1,5 @@
 """Handlers for topic management (view, rename, delete). Layer: Runtime."""
+
 from __future__ import annotations
 
 import logging
@@ -9,6 +10,7 @@ from telegram.helpers import escape_markdown
 
 from src.config.constants import STATE_EDIT_TOPIC_NAME, STATE_MAIN_MENU, STATE_TOPIC_MANAGE
 from src.config.i18n import t
+from src.runtime.job_utils import remove_job
 from src.runtime.keyboards import main_menu_keyboard, topic_manage_keyboard
 from src.service.schedule_service import ScheduleService
 from src.service.topic_service import TopicService
@@ -32,6 +34,7 @@ async def my_topics_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         telegram_id=update.effective_user.id,
         username=update.effective_user.username or "",
         first_name=update.effective_user.first_name or "",
+        language_code=update.effective_user.language_code,
     )
     topics = await topic_service.get_user_topics(user.id)
 
@@ -42,11 +45,11 @@ async def my_topics_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
         return STATE_MAIN_MENU
 
-    await update.message.reply_text(t("your_topics", lang), parse_mode="Markdown")
+    await update.message.reply_text(t("your_topics", lang), parse_mode="MarkdownV2")
     for topic in topics:
         await update.message.reply_text(
-            t("topic_name_display", lang, name=escape_markdown(topic.name)),
-            parse_mode="Markdown",
+            t("topic_name_display", lang, name=escape_markdown(topic.name, version=2)),
+            parse_mode="MarkdownV2",
             reply_markup=topic_manage_keyboard(topic, lang),
         )
 
@@ -72,8 +75,9 @@ async def delete_topic_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
     user = await topic_service.ensure_user(
         telegram_id=query.from_user.id,
-        username=query.from_user.username or '',
-        first_name=query.from_user.first_name or '',
+        username=query.from_user.username or "",
+        first_name=query.from_user.first_name or "",
+        language_code=query.from_user.language_code,
     )
     topic = await topic_service.get_topic(topic_id)
     if not topic or not user.id or topic.user_id != user.id:
@@ -86,10 +90,7 @@ async def delete_topic_callback(update: Update, context: ContextTypes.DEFAULT_TY
     await schedule_service.remove_schedule(topic_id)
 
     # Cancel job queue entry
-    if context.job_queue:
-        jobs = context.job_queue.get_jobs_by_name(f"photo_{topic_id}")
-        for job in jobs:
-            job.schedule_removal()
+    remove_job(f"photo_{topic_id}", context)
 
     await topic_service.remove_topic(topic_id)
 
@@ -115,8 +116,9 @@ async def rename_topic_callback(update: Update, context: ContextTypes.DEFAULT_TY
     topic_service: TopicService = context.bot_data["topic_service"]
     user = await topic_service.ensure_user(
         telegram_id=query.from_user.id,
-        username=query.from_user.username or '',
-        first_name=query.from_user.first_name or '',
+        username=query.from_user.username or "",
+        first_name=query.from_user.first_name or "",
+        language_code=query.from_user.language_code,
     )
     topic = await topic_service.get_topic(topic_id)
     if not topic or not user.id or topic.user_id != user.id:
@@ -155,8 +157,8 @@ async def receive_new_topic_name(update: Update, context: ContextTypes.DEFAULT_T
     del context.user_data["rename_topic_id"]
 
     await update.message.reply_text(
-        t("topic_renamed", lang, name=escape_markdown(new_name)),
-        parse_mode="Markdown",
+        t("topic_renamed", lang, name=escape_markdown(new_name, version=2)),
+        parse_mode="MarkdownV2",
         reply_markup=main_menu_keyboard(),
     )
     return STATE_MAIN_MENU

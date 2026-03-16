@@ -1,4 +1,5 @@
 """Topic management handler. Layer: Runtime."""
+
 from __future__ import annotations
 
 import logging
@@ -90,9 +91,7 @@ async def receive_new_topic(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         return STATE_MAIN_MENU
 
     try:
-        topic = await topic_service.add_topic(
-            user_id=user_id, name=topic_name, is_free=is_free
-        )
+        topic = await topic_service.add_topic(user_id=user_id, name=topic_name, is_free=is_free)
     except ValueError as exc:
         await update.message.reply_text(t("error_try_again", lang, error=str(exc)))
         return STATE_AWAITING_NEW_TOPIC
@@ -104,8 +103,8 @@ async def receive_new_topic(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         return STATE_MAIN_MENU
 
     await update.message.reply_text(
-        t("topic_added", lang, name=escape_markdown(topic.name)),
+        t("topic_added", lang, name=escape_markdown(topic.name, version=2)),
         reply_markup=main_menu_keyboard(),
-        parse_mode="Markdown",
+        parse_mode="MarkdownV2",
     )
     return STATE_MAIN_MENU

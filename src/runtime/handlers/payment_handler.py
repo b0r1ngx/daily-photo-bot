@@ -1,4 +1,5 @@
 """Payment handler for Telegram Stars. Layer: Runtime."""
+
 from __future__ import annotations
 
 import logging
@@ -18,9 +19,7 @@ def _lang(update: Update) -> str | None:
     return update.effective_user.language_code if update.effective_user else None
 
 
-async def pre_checkout_callback(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def pre_checkout_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle pre-checkout query — verify and approve payment."""
     query = update.pre_checkout_query
     if not query:
@@ -36,9 +35,7 @@ async def pre_checkout_callback(
         await query.answer(ok=False, error_message=t("payment_failed", lang))
 
 
-async def successful_payment_callback(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle successful payment — allow user to add a new topic."""
     if not update.message or not update.message.successful_payment:
         return
@@ -55,5 +52,6 @@ async def successful_payment_callback(
 
     await update.message.reply_text(
         t("payment_success", _lang(update)),
+        parse_mode="MarkdownV2",
         reply_markup=main_menu_keyboard(),
     )

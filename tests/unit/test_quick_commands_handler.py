@@ -196,7 +196,7 @@ class TestPhotoCommand:
         update.message.reply_photo.assert_awaited_once()
         call_kwargs = update.message.reply_photo.call_args[1]
         assert call_kwargs["photo"] == SAMPLE_PHOTO.url
-        assert call_kwargs["parse_mode"] == "Markdown"
+        assert call_kwargs["parse_mode"] == "MarkdownV2"
         # reply_text should NOT have been called (no error)
         update.message.reply_text.assert_not_awaited()
 
@@ -224,7 +224,7 @@ class TestPhotoCommand:
 # ===========================================================================
 
 
-@patch("src.runtime.handlers.quick_commands_handler._remove_job")
+@patch("src.runtime.handlers.quick_commands_handler.remove_job")
 class TestStopCommand:
     """Tests for the /stop command handler."""
 
@@ -323,7 +323,7 @@ class TestStopCommand:
         assert result == STATE_MAIN_MENU
         schedule_service.get_schedule.assert_awaited_once_with(SAMPLE_TOPIC.id)
         schedule_service.remove_schedule.assert_awaited_once_with(SAMPLE_TOPIC.id)
-        mock_remove_job.assert_called_once_with(context, f"photo_{SAMPLE_TOPIC.id}")
+        mock_remove_job.assert_called_once_with(f"photo_{SAMPLE_TOPIC.id}", context)
         update.message.reply_text.assert_awaited_once()
 
     async def test_multiple_topics_stops_all_active(
@@ -407,8 +407,8 @@ class TestStopCommand:
         assert schedule_service.get_schedule.await_count == 2
         # Both attempted remove_schedule (both had active schedule)
         assert schedule_service.remove_schedule.await_count == 2
-        # Only the successful one gets _remove_job
+        # Only the successful one gets remove_job
         assert mock_remove_job.call_count == 1
-        mock_remove_job.assert_called_once_with(context, "photo_10")
+        mock_remove_job.assert_called_once_with("photo_10", context)
         # Reply was sent (stop_success with count=1)
         update.message.reply_text.assert_awaited_once()

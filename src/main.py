@@ -4,9 +4,14 @@ from __future__ import annotations
 import asyncio
 import datetime
 import logging
+import signal
+
+from telegram.ext import Application
 
 from src.config.logging import setup_logging
 from src.config.settings import DATABASE_PATH
+from src.service.schedule_service import ScheduleService
+from src.service.topic_service import TopicService
 
 logger = logging.getLogger(__name__)
 
@@ -45,15 +50,13 @@ async def _startup() -> None:
     app = build_application()
 
     # Store services in bot_data for handler access
-    app.bot_data["db"] = db
     app.bot_data["topic_service"] = topic_service
     app.bot_data["photo_service"] = photo_service
     app.bot_data["schedule_service"] = schedule_service
     app.bot_data["payment_service"] = payment_service
-    app.bot_data["topic_repo"] = topic_repo
 
     # Reload schedules from database
-    await _reload_schedules(app, schedule_service, db)
+    await _reload_schedules(app, schedule_service, topic_service)
 
     logger.info("🤖 Daily Photo Bot starting...")
 
@@ -64,13 +67,34 @@ async def _startup() -> None:
 
     logger.info("🤖 Bot is running! Press Ctrl+C to stop.")
 
-    # Keep running until interrupted
+    # Graceful shutdown via signal handlers
+    loop = asyncio.get_running_loop()
+    stop_event = asyncio.Event()
+
+    def _signal_handler() -> None:
+        logger.info("Received shutdown signal...")
+        stop_event.set()
+
     try:
-        stop_event = asyncio.Event()
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            loop.add_signal_handler(sig, _signal_handler)
+    except NotImplementedError:
+        # Windows does not support loop.add_signal_handler().
+        # Fallback: stop_event.wait() will block until KeyboardInterrupt
+        # or SystemExit is raised. Note: This is less reliable on Windows
+        # as KeyboardInterrupt may not always interrupt asyncio.Event.wait().
+        # For production use, deploy on Linux/macOS.
+        logger.warning(
+            "Signal handlers not supported on this platform, using fallback."
+        )
+
+    try:
         await stop_event.wait()
     except (KeyboardInterrupt, SystemExit):
-        logger.info("Shutting down...")
+        # Fallback for platforms without signal handler support
+        logger.info("Received interrupt...")
     finally:
+        logger.info("Shutting down...")
         await app.updater.stop()  # type: ignore[union-attr]
         await app.stop()
         await app.shutdown()
@@ -79,33 +103,25 @@ async def _startup() -> None:
 
 
 async def _reload_schedules(
-    app: object,
-    schedule_service: object,
-    db: object,
+    app: Application,
+    schedule_service: ScheduleService,
+    topic_service: TopicService,
 ) -> None:
     """Reload all active schedules from the database and register jobs."""
     from src.runtime.handlers.schedule_handler import _send_scheduled_photo
-    from src.service.schedule_service import ScheduleService
     from src.types.schedule import ScheduleType
 
-    svc: ScheduleService = schedule_service  # type: ignore[assignment]
-    schedules = await svc.get_all_active_schedules()
+    schedules = await schedule_service.get_all_active_schedules()
     logger.info("Reloading %d active schedule(s) from database.", len(schedules))
 
     for schedule in schedules:
-        # Find the chat_id for this topic's user
-        cursor = await db.execute(  # type: ignore[union-attr]
-            "SELECT u.telegram_id FROM users u "
-            "JOIN topics t ON t.user_id = u.id "
-            "WHERE t.id = ?",
-            (schedule.topic_id,),
-        )
-        row = await cursor.fetchone()
-        if not row:
-            logger.warning("No user found for topic_id=%d, skipping.", schedule.topic_id)
+        chat_id = await topic_service.get_owner_telegram_id(schedule.topic_id)
+        if chat_id is None:
+            logger.warning(
+                "No user found for topic_id=%d, skipping schedule.",
+                schedule.topic_id,
+            )
             continue
-
-        chat_id = row[0]
         job_name = f"photo_{schedule.topic_id}"
 
         if schedule.schedule_type == ScheduleType.INTERVAL:

@@ -5,18 +5,20 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMa
 
 from src.config.constants import (
     KB_ADD_TOPIC,
+    KB_MY_TOPICS,
     KB_SCHEDULE,
     SCHEDULE_HOURS,
     SCHEDULE_INTERVALS,
     SCHEDULE_MINUTES,
 )
+from src.config.i18n import t
 from src.types.user import Topic
 
 
 def main_menu_keyboard() -> ReplyKeyboardMarkup:
     """Build the main menu ReplyKeyboardMarkup."""
     return ReplyKeyboardMarkup(
-        [[KB_ADD_TOPIC, KB_SCHEDULE]],
+        [[KB_ADD_TOPIC, KB_MY_TOPICS], [KB_SCHEDULE]],
         resize_keyboard=True,
     )
 
@@ -24,18 +26,37 @@ def main_menu_keyboard() -> ReplyKeyboardMarkup:
 def topic_list_keyboard(topics: list[Topic]) -> InlineKeyboardMarkup:
     """Build inline keyboard with user's topics for selection."""
     buttons = [
-        [InlineKeyboardButton(text=t.name, callback_data=f"topic_{t.id}")]
-        for t in topics
+        [InlineKeyboardButton(text=topic.name, callback_data=f"topic_{topic.id}")]
+        for topic in topics
     ]
     return InlineKeyboardMarkup(buttons)
 
 
-def schedule_type_keyboard() -> InlineKeyboardMarkup:
+def topic_manage_keyboard(topic: Topic, language_code: str | None = None) -> InlineKeyboardMarkup:
+    """Build inline keyboard with rename/delete actions for a topic."""
+    if topic.id is None:
+        raise ValueError(f'Cannot build manage keyboard for topic without id: {topic.name}')
+    rename_btn = InlineKeyboardButton(
+        t('btn_rename', language_code), callback_data=f"rename_{topic.id}",
+    )
+    delete_btn = InlineKeyboardButton(
+        t('btn_delete', language_code), callback_data=f"delete_{topic.id}",
+    )
+    return InlineKeyboardMarkup([[rename_btn, delete_btn]])
+
+
+def schedule_type_keyboard(language_code: str | None = None) -> InlineKeyboardMarkup:
     """Build inline keyboard for choosing schedule type."""
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("⏱ Every X minutes", callback_data="stype_interval")],
-        [InlineKeyboardButton("🕐 At specific time", callback_data="stype_fixed")],
-    ])
+    interval_btn = InlineKeyboardButton(
+        t('btn_repeat_interval', language_code), callback_data="stype_interval",
+    )
+    fixed_btn = InlineKeyboardButton(
+        t('btn_fixed_time', language_code), callback_data="stype_fixed",
+    )
+    remove_btn = InlineKeyboardButton(
+        t('btn_remove_schedule', language_code), callback_data="stype_remove",
+    )
+    return InlineKeyboardMarkup([[interval_btn], [fixed_btn], [remove_btn]])
 
 
 def interval_keyboard() -> InlineKeyboardMarkup:

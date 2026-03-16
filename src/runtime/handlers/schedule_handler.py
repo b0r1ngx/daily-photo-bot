@@ -6,6 +6,7 @@ import logging
 
 from telegram import Update
 from telegram.ext import ContextTypes
+from telegram.helpers import escape_markdown
 
 from src.config.constants import (
     STATE_MAIN_MENU,
@@ -15,6 +16,7 @@ from src.config.constants import (
     STATE_SCHEDULE_SELECT_TOPIC,
     STATE_SCHEDULE_TYPE,
 )
+from src.config.i18n import t
 from src.runtime.keyboards import (
     hour_keyboard,
     interval_keyboard,
@@ -29,28 +31,34 @@ from src.service.topic_service import TopicService
 logger = logging.getLogger(__name__)
 
 
+def _lang(update: Update) -> str | None:
+    """Extract language_code from the effective user."""
+    return update.effective_user.language_code if update.effective_user else None
+
+
 async def schedule_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle '⏰ Schedule' button press — show topic list."""
     if not update.message:
         return STATE_MAIN_MENU
 
+    lang = _lang(update)
     topic_service: TopicService = context.bot_data["topic_service"]
     user_id = context.user_data.get("db_user_id")
 
     if not user_id:
-        await update.message.reply_text("Please use /start first.")
+        await update.message.reply_text(t("use_start_first", lang))
         return STATE_MAIN_MENU
 
     topics = await topic_service.get_user_topics(user_id)
     if not topics:
         await update.message.reply_text(
-            "You don't have any topics yet! Add one first.",
+            t("no_topics_for_schedule", lang),
             reply_markup=main_menu_keyboard(),
         )
         return STATE_MAIN_MENU
 
     await update.message.reply_text(
-        "📋 Select a topic to configure its schedule:",
+        t("select_topic", lang),
         reply_markup=topic_list_keyboard(topics),
     )
     return STATE_SCHEDULE_SELECT_TOPIC
@@ -66,13 +74,15 @@ async def select_topic_callback(
 
     await query.answer()
 
+    lang = _lang(update)
+
     # Parse topic_id from callback_data: "topic_42"
     topic_id = int(query.data.split("_")[1])
     context.user_data["schedule_topic_id"] = topic_id
 
     await query.edit_message_text(
-        "⏰ How do you want to receive photos?",
-        reply_markup=schedule_type_keyboard(),
+        t("schedule_type_prompt", lang),
+        reply_markup=schedule_type_keyboard(lang),
     )
     return STATE_SCHEDULE_TYPE
 
@@ -87,19 +97,39 @@ async def select_schedule_type_callback(
 
     await query.answer()
 
+    lang = _lang(update)
+
     if query.data == "stype_interval":
         await query.edit_message_text(
-            "⏱ Select how often you want to receive photos:",
+            t("select_interval", lang),
             reply_markup=interval_keyboard(),
         )
         return STATE_SCHEDULE_INTERVAL
 
     if query.data == "stype_fixed":
         await query.edit_message_text(
-            "🕐 Select the hour (24h format):",
+            t("select_hour", lang),
             reply_markup=hour_keyboard(),
         )
         return STATE_SCHEDULE_HOUR
+
+    if query.data == "stype_remove":
+        topic_id = context.user_data.get("schedule_topic_id")
+        if topic_id is None:
+            await query.edit_message_text(t("schedule_no_topic", lang))
+            return STATE_MAIN_MENU
+
+        schedule_service: ScheduleService = context.bot_data["schedule_service"]
+        await schedule_service.remove_schedule(topic_id)
+        _remove_job(context, f"photo_{topic_id}")
+
+        await query.edit_message_text(t("schedule_removed", lang))
+        await context.bot.send_message(
+            chat_id=query.from_user.id,
+            text=t("menu_continue", lang),
+            reply_markup=main_menu_keyboard(),
+        )
+        return STATE_MAIN_MENU
 
     return STATE_SCHEDULE_TYPE
 
@@ -114,11 +144,13 @@ async def select_interval_callback(
 
     await query.answer()
 
+    lang = _lang(update)
+
     seconds = int(query.data.split("_")[1])
     topic_id = context.user_data.get("schedule_topic_id")
 
     if not topic_id:
-        await query.edit_message_text("❌ Error: topic not found. Please try again.")
+        await query.edit_message_text(t("schedule_topic_error", lang))
         return STATE_MAIN_MENU
 
     schedule_service: ScheduleService = context.bot_data["schedule_service"]
@@ -129,7 +161,7 @@ async def select_interval_callback(
     _register_interval_job(context, topic_id, seconds, chat_id)
 
     await query.edit_message_text(
-        f"✅ Schedule set! You'll receive a photo every {_format_interval(seconds)}.",
+        t("schedule_interval_set", lang, interval=_format_interval(seconds, lang)),
     )
     return STATE_MAIN_MENU
 
@@ -144,11 +176,13 @@ async def select_hour_callback(
 
     await query.answer()
 
+    lang = _lang(update)
+
     hour = int(query.data.split("_")[1])
     context.user_data["schedule_hour"] = hour
 
     await query.edit_message_text(
-        f"🕐 Selected hour: {hour:02d}\nNow select minutes:",
+        t("select_minute", lang, hour=f"{hour:02d}"),
         reply_markup=minute_keyboard(),
     )
     return STATE_SCHEDULE_MINUTE
@@ -164,12 +198,14 @@ async def select_minute_callback(
 
     await query.answer()
 
+    lang = _lang(update)
+
     minute = int(query.data.split("_")[1])
     hour = context.user_data.get("schedule_hour", 0)
     topic_id = context.user_data.get("schedule_topic_id")
 
     if not topic_id:
-        await query.edit_message_text("❌ Error: topic not found. Please try again.")
+        await query.edit_message_text(t("schedule_topic_error", lang))
         return STATE_MAIN_MENU
 
     schedule_service: ScheduleService = context.bot_data["schedule_service"]
@@ -182,7 +218,7 @@ async def select_minute_callback(
     _register_daily_job(context, topic_id, hour, minute, chat_id)
 
     await query.edit_message_text(
-        f"✅ Schedule set! You'll receive a photo daily at {hour:02d}:{minute:02d}.",
+        t("schedule_fixed_set", lang, time=f"{hour:02d}:{minute:02d}"),
     )
     return STATE_MAIN_MENU
 
@@ -245,29 +281,30 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
     topic_id = job.data["topic_id"]
     photo_service: PhotoService = context.bot_data["photo_service"]
     schedule_service: ScheduleService = context.bot_data["schedule_service"]
+    topic_service: TopicService = context.bot_data["topic_service"]
 
-    # Resolve topic name via direct DB query (acceptable shortcut for job callbacks)
-    db = context.bot_data["db"]
-    cursor = await db.execute(
-        "SELECT name FROM topics WHERE id = ? AND is_active = 1", (topic_id,)
-    )
-    row = await cursor.fetchone()
-    if not row:
+    result = await topic_service.get_topic_with_language(topic_id)
+    if not result:
         logger.warning("Topic %d not found or inactive, skipping.", topic_id)
         return
 
-    topic_name = row[0]
+    topic_name, language_code = result
 
     try:
-        photo = await photo_service.get_photo(topic=topic_name, topic_id=topic_id)
+        photo = await photo_service.get_photo(
+            topic=topic_name, topic_id=topic_id, language_code=language_code,
+        )
     except Exception:
         logger.exception("Failed to fetch photo for topic '%s'", topic_name)
         return
 
-    caption = (
-        f"📸 *{topic_name}*\n"
-        f"Photo by {photo.photographer} on "
-        f"[{photo.source.title()}]({photo.source_url})"
+    caption = t(
+        "photo_caption",
+        language_code,
+        name=escape_markdown(topic_name),
+        photographer=photo.photographer,
+        source=photo.source.title(),
+        url=photo.source_url,
     )
 
     try:
@@ -287,9 +324,9 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
         await schedule_service.mark_sent(schedule.id)
 
 
-def _format_interval(seconds: int) -> str:
-    """Format seconds into a human-readable interval string."""
+def _format_interval(seconds: int, language_code: str | None = None) -> str:
+    """Format seconds into a localized human-readable interval string."""
     if seconds < 3600:
-        return f"{seconds // 60} minutes"
+        return t('interval_minutes', language_code, count=seconds // 60)
     hours = seconds // 3600
-    return f"{hours} hour{'s' if hours > 1 else ''}"
+    return t('interval_hours', language_code, count=hours)

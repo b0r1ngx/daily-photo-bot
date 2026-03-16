@@ -15,18 +15,26 @@ from telegram.ext import (
 
 from src.config.constants import (
     KB_ADD_TOPIC,
+    KB_MY_TOPICS,
     KB_SCHEDULE,
     STATE_AWAITING_NEW_TOPIC,
     STATE_AWAITING_TOPIC,
+    STATE_EDIT_TOPIC_NAME,
     STATE_MAIN_MENU,
     STATE_SCHEDULE_HOUR,
     STATE_SCHEDULE_INTERVAL,
     STATE_SCHEDULE_MINUTE,
     STATE_SCHEDULE_SELECT_TOPIC,
     STATE_SCHEDULE_TYPE,
+    STATE_TOPIC_MANAGE,
 )
 from src.config.settings import TELEGRAM_BOT_TOKEN
-from src.runtime.handlers.help_handler import cancel_command, help_command, unknown_message
+from src.runtime.handlers.help_handler import (
+    cancel_command,
+    help_command,
+    unknown_message,
+    version_command,
+)
 from src.runtime.handlers.payment_handler import (
     pre_checkout_callback,
     successful_payment_callback,
@@ -41,6 +49,12 @@ from src.runtime.handlers.schedule_handler import (
 )
 from src.runtime.handlers.start_handler import receive_first_topic, start_command
 from src.runtime.handlers.topic_handler import add_topic_menu, receive_new_topic
+from src.runtime.handlers.topic_manage_handler import (
+    delete_topic_callback,
+    my_topics_menu,
+    receive_new_topic_name,
+    rename_topic_callback,
+)
 
 
 def build_application() -> Application:  # type: ignore[type-arg]
@@ -49,6 +63,7 @@ def build_application() -> Application:  # type: ignore[type-arg]
 
     # Escape button labels for safe regex matching
     add_topic_pattern = f"^{re.escape(KB_ADD_TOPIC)}$"
+    my_topics_pattern = f"^{re.escape(KB_MY_TOPICS)}$"
     schedule_pattern = f"^{re.escape(KB_SCHEDULE)}$"
 
     # Main conversation handler
@@ -60,6 +75,7 @@ def build_application() -> Application:  # type: ignore[type-arg]
             ],
             STATE_MAIN_MENU: [
                 MessageHandler(filters.Regex(add_topic_pattern), add_topic_menu),
+                MessageHandler(filters.Regex(my_topics_pattern), my_topics_menu),
                 MessageHandler(filters.Regex(schedule_pattern), schedule_menu),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, unknown_message),
             ],
@@ -87,10 +103,18 @@ def build_application() -> Application:  # type: ignore[type-arg]
                     select_minute_callback, pattern=r"^minute_\d+$"
                 ),
             ],
+            STATE_TOPIC_MANAGE: [
+                CallbackQueryHandler(delete_topic_callback, pattern=r'^delete_\d+$'),
+                CallbackQueryHandler(rename_topic_callback, pattern=r'^rename_\d+$'),
+            ],
+            STATE_EDIT_TOPIC_NAME: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, receive_new_topic_name),
+            ],
         },
         fallbacks=[
             CommandHandler("cancel", cancel_command),
             CommandHandler("start", start_command),
+            CommandHandler("version", version_command),
         ],
     )
 

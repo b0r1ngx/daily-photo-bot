@@ -19,6 +19,7 @@ class UserRepository(Protocol):
         telegram_id: int,
         username: str | None = None,
         first_name: str | None = None,
+        language_code: str | None = None,
     ) -> User:
         ...
 
@@ -32,6 +33,9 @@ class TopicRepository(Protocol):
     async def create(self, user_id: int, name: str, is_free: bool = True) -> Topic:
         ...
 
+    async def get_by_id(self, topic_id: int) -> Topic | None:
+        ...
+
     async def get_by_user(self, user_id: int, active_only: bool = True) -> list[Topic]:
         ...
 
@@ -39,6 +43,17 @@ class TopicRepository(Protocol):
         ...
 
     async def delete(self, topic_id: int) -> None:
+        ...
+
+    async def update_name(self, topic_id: int, new_name: str) -> None:
+        ...
+
+    async def get_by_id_with_user_language(
+        self, topic_id: int,
+    ) -> tuple[str, str | None] | None:
+        ...
+
+    async def get_owner_telegram_id(self, topic_id: int) -> int | None:
         ...
 
 

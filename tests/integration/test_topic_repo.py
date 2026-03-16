@@ -73,3 +73,105 @@ async def test_delete_shows_in_all(topic_repo: TopicRepo, user_id: int):
     all_topics = await topic_repo.get_by_user(user_id, active_only=False)
     assert len(all_topics) == 1
     assert all_topics[0].is_active is False
+
+
+@pytest.mark.asyncio
+async def test_update_name(topic_repo: TopicRepo, user_id: int) -> None:
+    """Test renaming a topic."""
+    topic = await topic_repo.create(user_id=user_id, name='old name', is_free=True)
+    assert topic.id is not None
+    await topic_repo.update_name(topic.id, 'new name')
+    topics = await topic_repo.get_by_user(user_id)
+    assert topics[0].name == 'new name'
+
+
+@pytest.mark.asyncio
+async def test_update_name_deleted_topic(topic_repo: TopicRepo, user_id: int) -> None:
+    """Renaming a soft-deleted topic should raise ValueError."""
+    topic = await topic_repo.create(user_id=user_id, name='doomed', is_free=True)
+    assert topic.id is not None
+    await topic_repo.delete(topic.id)
+    with pytest.raises(ValueError):
+        await topic_repo.update_name(topic.id, 'new name')
+
+
+@pytest.mark.asyncio
+async def test_get_by_id(topic_repo: TopicRepo, user_id: int) -> None:
+    """Test fetching a topic by its ID."""
+    topic = await topic_repo.create(user_id=user_id, name='findme', is_free=True)
+    assert topic.id is not None
+    found = await topic_repo.get_by_id(topic.id)
+    assert found is not None
+    assert found.name == 'findme'
+
+
+@pytest.mark.asyncio
+async def test_get_by_id_not_found(topic_repo: TopicRepo) -> None:
+    """get_by_id returns None for non-existent topic."""
+    found = await topic_repo.get_by_id(99999)
+    assert found is None
+
+
+@pytest.mark.asyncio
+async def test_get_by_id_deleted(topic_repo: TopicRepo, user_id: int) -> None:
+    """get_by_id returns None for soft-deleted topic."""
+    topic = await topic_repo.create(user_id=user_id, name='deleted', is_free=True)
+    assert topic.id is not None
+    await topic_repo.delete(topic.id)
+    found = await topic_repo.get_by_id(topic.id)
+    assert found is None
+
+
+@pytest.mark.asyncio
+async def test_get_by_id_with_user_language(
+    topic_repo: TopicRepo, user_repo: UserRepo,
+) -> None:
+    """get_by_id_with_user_language returns (name, language_code) for active topic."""
+    user = await user_repo.get_or_create(
+        telegram_id=99001, language_code="en",
+    )
+    assert user.id is not None
+    topic = await topic_repo.create(user_id=user.id, name="parrots")
+    assert topic.id is not None
+
+    result = await topic_repo.get_by_id_with_user_language(topic.id)
+    assert result is not None
+    assert result == ("parrots", "en")
+
+
+@pytest.mark.asyncio
+async def test_get_by_id_with_user_language_inactive(
+    topic_repo: TopicRepo, user_repo: UserRepo,
+) -> None:
+    """get_by_id_with_user_language returns None for inactive topic."""
+    user = await user_repo.get_or_create(
+        telegram_id=99002, language_code="ru",
+    )
+    assert user.id is not None
+    topic = await topic_repo.create(user_id=user.id, name="mountains")
+    assert topic.id is not None
+    await topic_repo.delete(topic.id)
+
+    result = await topic_repo.get_by_id_with_user_language(topic.id)
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_get_owner_telegram_id(
+    topic_repo: TopicRepo, user_repo: UserRepo,
+) -> None:
+    """get_owner_telegram_id returns the telegram_id of the topic owner."""
+    user = await user_repo.get_or_create(telegram_id=99003)
+    assert user.id is not None
+    topic = await topic_repo.create(user_id=user.id, name="cats")
+    assert topic.id is not None
+
+    telegram_id = await topic_repo.get_owner_telegram_id(topic.id)
+    assert telegram_id == 99003
+
+
+@pytest.mark.asyncio
+async def test_get_owner_telegram_id_not_found(topic_repo: TopicRepo) -> None:
+    """get_owner_telegram_id returns None for nonexistent topic."""
+    result = await topic_repo.get_owner_telegram_id(99999)
+    assert result is None

@@ -33,7 +33,7 @@ def service(user_repo, topic_repo):
 async def test_ensure_user(service: TopicService, user_repo):
     user = await service.ensure_user(12345, "test", "Test")
     assert user.telegram_id == 12345
-    user_repo.get_or_create.assert_awaited_once_with(12345, "test", "Test")
+    user_repo.get_or_create.assert_awaited_once_with(12345, "test", "Test", None)
 
 
 @pytest.mark.asyncio
@@ -72,3 +72,41 @@ async def test_can_add_free_topic(service: TopicService, topic_repo):
     assert await service.can_add_free_topic(1) is True
     topic_repo.count_by_user.return_value = 1
     assert await service.can_add_free_topic(1) is False
+
+
+@pytest.mark.asyncio
+async def test_rename_topic_success(service: TopicService, topic_repo) -> None:
+    """Test renaming a topic with valid name."""
+    await service.rename_topic(1, 'new name')
+    topic_repo.update_name.assert_called_once_with(1, 'new name')
+
+
+@pytest.mark.asyncio
+async def test_rename_topic_invalid_name(service: TopicService) -> None:
+    """Test renaming with invalid name raises ValueError."""
+    with pytest.raises(ValueError):
+        await service.rename_topic(1, '')
+
+    with pytest.raises(ValueError):
+        await service.rename_topic(1, 'a' * 51)
+
+    with pytest.raises(ValueError):
+        await service.rename_topic(1, '!!!')
+
+
+@pytest.mark.asyncio
+async def test_get_topic_with_language(service: TopicService, topic_repo) -> None:
+    """get_topic_with_language delegates to repo.get_by_id_with_user_language."""
+    topic_repo.get_by_id_with_user_language.return_value = ("parrots", "en")
+    result = await service.get_topic_with_language(42)
+    assert result == ("parrots", "en")
+    topic_repo.get_by_id_with_user_language.assert_awaited_once_with(42)
+
+
+@pytest.mark.asyncio
+async def test_get_owner_telegram_id(service: TopicService, topic_repo) -> None:
+    """get_owner_telegram_id delegates to repo.get_owner_telegram_id."""
+    topic_repo.get_owner_telegram_id.return_value = 12345
+    result = await service.get_owner_telegram_id(42)
+    assert result == 12345
+    topic_repo.get_owner_telegram_id.assert_awaited_once_with(42)

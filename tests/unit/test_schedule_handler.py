@@ -228,6 +228,8 @@ class TestSendScheduledPhotoForbidden:
         topic_service.get_topic.assert_awaited_once_with(1)
         # Should NOT try to get user topics (topic not found)
         topic_service.get_user_topics.assert_not_awaited()
+        # Should deactivate the orphaned schedule in DB
+        schedule_service.remove_schedule.assert_awaited_once_with(1)
         # Should remove the job directly
         mock_remove_job.assert_called_once_with("photo_1", context)
         schedule_service.mark_sent.assert_not_awaited()

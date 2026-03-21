@@ -313,6 +313,7 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
                 job.chat_id,
                 topic_id,
             )
+            await schedule_service.remove_schedule(topic_id)
             remove_job(f"photo_{topic_id}", context)
         return
     except Exception:

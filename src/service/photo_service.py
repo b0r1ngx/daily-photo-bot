@@ -215,7 +215,10 @@ class PhotoService:
             )
 
         if self._recorder:
-            await self._recorder.record_api_request("pexels")
+            try:
+                await self._recorder.record_api_request("pexels")
+            except Exception:
+                logger.warning("Failed to record pexels API request", exc_info=True)
 
         if response.status_code == 429:
             retry_after = int(response.headers.get("Retry-After", "60"))
@@ -248,7 +251,10 @@ class PhotoService:
                     },
                 )
             if self._recorder:
-                await self._recorder.record_api_request("pexels")
+                try:
+                    await self._recorder.record_api_request("pexels")
+                except Exception:
+                    logger.warning("Failed to record pexels API request", exc_info=True)
             if response.status_code == 200:
                 photos = response.json().get("photos", [])
                 unsent = [p for p in photos if str(p["id"]) not in sent_ids]
@@ -282,7 +288,10 @@ class PhotoService:
             )
 
         if self._recorder:
-            await self._recorder.record_api_request("unsplash")
+            try:
+                await self._recorder.record_api_request("unsplash")
+            except Exception:
+                logger.warning("Failed to record unsplash API request", exc_info=True)
 
         if response.status_code == 429:
             raise RateLimitError("unsplash")

@@ -128,7 +128,13 @@ class TopicRepo:
         row = await cursor.fetchone()
         if not row or row[0] is None:
             return MetadataPrefs()
-        data = json.loads(row[0])
+        try:
+            data = json.loads(row[0])
+        except json.JSONDecodeError:
+            logger.warning(
+                "Corrupted metadata_prefs JSON for topic_id=%d, using defaults.", topic_id,
+            )
+            return MetadataPrefs()
         return MetadataPrefs(
             show_description=data.get("show_description", True),
             show_location=data.get("show_location", True),

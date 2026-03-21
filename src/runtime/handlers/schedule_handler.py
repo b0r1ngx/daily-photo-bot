@@ -246,7 +246,7 @@ def _register_daily_job(
     remove_job(job_name, context)
     context.job_queue.run_daily(  # type: ignore[union-attr]
         _send_scheduled_photo,
-        time=datetime.time(hour=hour, minute=minute),
+        time=datetime.time(hour=hour, minute=minute, tzinfo=datetime.UTC),
         name=job_name,
         data={"topic_id": topic_id},
         chat_id=chat_id,

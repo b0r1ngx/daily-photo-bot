@@ -237,3 +237,19 @@ async def test_metadata_prefs_not_found_returns_defaults(
     """get_metadata_prefs returns defaults for nonexistent topic."""
     prefs = await topic_repo.get_metadata_prefs(99999)
     assert prefs == MetadataPrefs()
+
+
+@pytest.mark.asyncio
+async def test_get_metadata_prefs_corrupted_json_returns_defaults(
+    topic_repo: TopicRepo, user_id: int, db: aiosqlite.Connection,
+) -> None:
+    """get_metadata_prefs returns defaults when JSON is corrupted."""
+    topic = await topic_repo.create(user_id=user_id, name="broken")
+    assert topic.id is not None
+    await db.execute(
+        "UPDATE topics SET metadata_prefs = ? WHERE id = ?",
+        ("{not valid json!!", topic.id),
+    )
+    await db.commit()
+    prefs = await topic_repo.get_metadata_prefs(topic.id)
+    assert prefs == MetadataPrefs()

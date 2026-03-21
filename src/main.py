@@ -72,7 +72,7 @@ async def _startup() -> None:
 
         app.job_queue.run_daily(  # type: ignore[union-attr]
             send_daily_analytics,
-            time=datetime.time(hour=0, minute=0),
+            time=datetime.time(hour=0, minute=0, tzinfo=datetime.UTC),
             name="daily_analytics",
         )
         logger.info(
@@ -167,7 +167,7 @@ async def _reload_schedules(
             hour, minute = int(parts[0]), int(parts[1])
             app.job_queue.run_daily(  # type: ignore[union-attr]
                 _send_scheduled_photo,
-                time=datetime.time(hour=hour, minute=minute),
+                time=datetime.time(hour=hour, minute=minute, tzinfo=datetime.UTC),
                 name=job_name,
                 data={"topic_id": schedule.topic_id},
                 chat_id=chat_id,

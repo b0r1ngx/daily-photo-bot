@@ -3,6 +3,7 @@
 
 ## Active Task
 All 7 tasks from `docs/plans/todo-list.md` are complete.
+Copilot review fixes for PR #4 are complete.
 
 ## Current Status
 - **Version:** 0.2.3 (source: `src/config/constants.py:BOT_VERSION`)
@@ -22,10 +23,14 @@ All 7 tasks from `docs/plans/todo-list.md` are complete.
 7. **Task 2 (Photo Metadata)** — Per-topic metadata display preferences (description, location, camera). `MetadataPrefs` dataclass, `build_photo_caption()` shared caption builder, metadata extraction from Unsplash API (description/alt, location.name, exif.name). Settings UI with toggle keyboard (✅/❌). Migration v3. 22 new tests. 6 new i18n keys across 12 languages.
 
 ## Verification Status
-- **173/173 tests passing** (49 integration + 124 unit)
+- **175/175 tests passing** (51 integration + 124 unit)
 - **Layer dependency linter:** passing (0 violations)
 - **Ruff linter:** passing (0 errors)
 - **Architecture compliance:** All 5 layers (types, config, repo, service, runtime) have correct downward-only dependency flow
+
+## V2.4 Copilot Review Fixes (PR #4)
+1. **Rename `since_iso` → `since_dt_text`** — Parameter names and docstrings in `AnalyticsRepository` protocol and `AnalyticsRepo` implementation renamed to accurately reflect SQLite datetime text format (`YYYY-MM-DD HH:MM:SS`), not ISO-8601. Also renamed `older_than_iso` → `older_than_dt_text`.
+2. **Add `rowcount` check in `topic_repo.update_metadata_prefs`** — Silent failure on nonexistent/inactive topic now raises `ValueError`, matching the `update_name` pattern. Added `logger.info` call on success. 2 new integration tests added.
 
 ## Key Architecture Additions (V2.4)
 - **New conversation state:** `STATE_METADATA_SETTINGS = 10` — metadata toggle UI

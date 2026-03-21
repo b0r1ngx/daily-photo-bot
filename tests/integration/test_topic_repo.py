@@ -210,6 +210,27 @@ async def test_update_and_get_metadata_prefs(
 
 
 @pytest.mark.asyncio
+async def test_update_metadata_prefs_nonexistent_topic(
+    topic_repo: TopicRepo,
+) -> None:
+    """update_metadata_prefs raises ValueError for nonexistent topic."""
+    with pytest.raises(ValueError, match="not found or inactive"):
+        await topic_repo.update_metadata_prefs(99999, MetadataPrefs())
+
+
+@pytest.mark.asyncio
+async def test_update_metadata_prefs_deleted_topic(
+    topic_repo: TopicRepo, user_id: int,
+) -> None:
+    """update_metadata_prefs raises ValueError for soft-deleted topic."""
+    topic = await topic_repo.create(user_id=user_id, name="doomed", is_free=True)
+    assert topic.id is not None
+    await topic_repo.delete(topic.id)
+    with pytest.raises(ValueError, match="not found or inactive"):
+        await topic_repo.update_metadata_prefs(topic.id, MetadataPrefs())
+
+
+@pytest.mark.asyncio
 async def test_metadata_prefs_not_found_returns_defaults(
     topic_repo: TopicRepo,
 ) -> None:

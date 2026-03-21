@@ -142,11 +142,14 @@ class TopicRepo:
             "show_location": prefs.show_location,
             "show_camera": prefs.show_camera,
         })
-        await self._db.execute(
+        cursor = await self._db.execute(
             "UPDATE topics SET metadata_prefs = ? WHERE id = ? AND is_active = 1",
             (data, topic_id),
         )
         await self._db.commit()
+        if cursor.rowcount == 0:
+            raise ValueError(f"Topic {topic_id} not found or inactive")
+        logger.info("Updated metadata_prefs for topic_id=%d", topic_id)
 
     @staticmethod
     def _row_to_topic(row: aiosqlite.Row) -> Topic:

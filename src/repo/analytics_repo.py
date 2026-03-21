@@ -47,19 +47,19 @@ class AnalyticsRepo:
         row = await cursor.fetchone()
         return row[0] if row else 0
 
-    async def get_photos_sent_since(self, since_iso: str) -> int:
-        """Count photos sent since a given ISO datetime."""
+    async def get_photos_sent_since(self, since_dt_text: str) -> int:
+        """Count photos sent since a given datetime (YYYY-MM-DD HH:MM:SS)."""
         cursor = await self._db.execute(
-            "SELECT COUNT(*) FROM sent_photos WHERE sent_at >= ?", (since_iso,)
+            "SELECT COUNT(*) FROM sent_photos WHERE sent_at >= ?", (since_dt_text,)
         )
         row = await cursor.fetchone()
         return row[0] if row else 0
 
-    async def get_api_requests_since(self, source: str, since_iso: str) -> int:
-        """Count API requests for a given source since a given ISO datetime."""
+    async def get_api_requests_since(self, source: str, since_dt_text: str) -> int:
+        """Count API requests for a given source since a given datetime (YYYY-MM-DD HH:MM:SS)."""
         cursor = await self._db.execute(
             "SELECT COUNT(*) FROM api_requests WHERE source = ? AND requested_at >= ?",
-            (source, since_iso),
+            (source, since_dt_text),
         )
         row = await cursor.fetchone()
         return row[0] if row else 0
@@ -71,10 +71,13 @@ class AnalyticsRepo:
         )
         await self._db.commit()
 
-    async def cleanup_old_api_requests(self, older_than_iso: str) -> int:
-        """Delete api_requests older than the given ISO datetime. Returns count deleted."""
+    async def cleanup_old_api_requests(self, older_than_dt_text: str) -> int:
+        """Delete api_requests older than the given datetime (YYYY-MM-DD HH:MM:SS).
+
+        Returns count deleted.
+        """
         cursor = await self._db.execute(
-            "DELETE FROM api_requests WHERE requested_at < ?", (older_than_iso,)
+            "DELETE FROM api_requests WHERE requested_at < ?", (older_than_dt_text,)
         )
         await self._db.commit()
         return cursor.rowcount

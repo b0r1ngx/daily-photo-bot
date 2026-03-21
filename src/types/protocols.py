@@ -125,14 +125,14 @@ class AnalyticsRepository(Protocol):
     async def get_paid_user_count(self) -> int:
         ...
 
-    async def get_photos_sent_since(self, since_iso: str) -> int:
+    async def get_photos_sent_since(self, since_dt_text: str) -> int:
         ...
 
-    async def get_api_requests_since(self, source: str, since_iso: str) -> int:
+    async def get_api_requests_since(self, source: str, since_dt_text: str) -> int:
         ...
 
     async def record_api_request(self, source: str) -> None:
         ...
 
-    async def cleanup_old_api_requests(self, older_than_iso: str) -> int:
+    async def cleanup_old_api_requests(self, older_than_dt_text: str) -> int:
         ...

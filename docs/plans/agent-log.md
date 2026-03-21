@@ -4,7 +4,7 @@ This file tracks the reasoning and autonomous actions taken by AI Agents in this
 
 ---
 
-## 🤖 [Agent Instruction]
+## [Agent Instruction]
 **When you complete a complex task, append a new log entry at the bottom of this file using the format below.**
 
 ```markdown
@@ -41,7 +41,7 @@ This file tracks the reasoning and autonomous actions taken by AI Agents in this
 
 ---
 
-## 2026-03-15 — Full Bot Implementation (Phases 1–4)
+## 2026-03-15 — Full Bot Implementation (Phases 1-4)
 
 **Agent:** OpenCode (Claude Opus 4.6)
 **Duration:** Single extended session
@@ -57,7 +57,7 @@ This file tracks the reasoning and autonomous actions taken by AI Agents in this
 
 **Phase 1b: Plan Review Fixes**
 - Created Python AST-based layer dependency linter (`tools/ai-linters/layer-dependency-check.py`)
-- Added custom exception hierarchy (`BotError` base → `PhotoSourceError`, `RateLimitError`, etc.)
+- Added custom exception hierarchy (`BotError` base -> `PhotoSourceError`, `RateLimitError`, etc.)
 - Added Repository Protocol interfaces for dependency injection
 - Added structured logging configuration
 
@@ -75,7 +75,7 @@ This file tracks the reasoning and autonomous actions taken by AI Agents in this
 - All service tests mock repos via Protocol interfaces
 
 **Phase 4: Runtime**
-- Telegram handlers: /start onboarding, topic add flow, schedule configuration (type→interval/fixed), payment (pre_checkout + successful), /help + /cancel
+- Telegram handlers: /start onboarding, topic add flow, schedule configuration (type->interval/fixed), payment (pre_checkout + successful), /help + /cancel
 - ReplyKeyboardMarkup: main menu, topic list, schedule type, interval picker, hour/minute pickers
 - ConversationHandler state machine wiring in `app.py`
 - Entry point (`main.py`): DB init, DI wiring, schedule reload from DB on startup, polling loop
@@ -91,3 +91,30 @@ This file tracks the reasoning and autonomous actions taken by AI Agents in this
 - 41 tests (20 integration + 21 unit), all passing
 - 0 layer dependency violations
 - 0 ruff lint errors (after Phase 5 fixes)
+
+---
+
+### 2026-03-21 09:00 - Task: Harness Engineering Full Audit & Initialization
+**Agent:** OpenCode (Claude Opus 4.6)
+
+**Reasoning:**
+1. Read all documentation: `AGENTS.md`, `docs/architecture.md`, `docs/tech-stack.md`, `docs/testing.md`, `docs/agent-linters.md`, `docs/deployment.md`, `docs/state.md`, `docs/plans/agent-log.md`, `docs/plans/garbage-collection.md`, `docs/plans/README.md`, `docs/plans/v2-feedback-strategy.md`.
+2. Explored the complete `src/` directory tree and analyzed imports for every Python file across all 5 architecture layers (types, config, repo, service, runtime).
+3. Ran all three verification tools:
+   - `python tools/ai-linters/layer-dependency-check.py` — PASSED (0 violations)
+   - `python -m pytest tests/ -v` — PASSED (108/108 tests)
+   - `python -m ruff check src/` — PASSED (0 errors)
+4. Checked dependency stack against `docs/tech-stack.md` — all dependencies aligned.
+5. Identified 7 critical stale/broken artifacts from the original Harness Kit template, plus documentation drift.
+
+**Key Findings:**
+- **Architecture compliance: Excellent.** All 5 layers have strictly downward dependency flow. Protocol-based DI properly decouples service from repo layers. Zero violations.
+- **Tech stack compliance: Full.** python-telegram-bot, aiosqlite, httpx, python-dotenv, pytest, ruff — all match approved stack.
+- **Dead code:** `layer-dependency-check.js` (JS linter for a Python project), `ai-garbage-collect.yml` (Node.js workflow for a Python project).
+- **Doc drift:** Test counts stale (docs say 79/106, actual is 108), version mismatch (`pyproject.toml` says 0.1.0, should be 0.2.2), `agent-linters.md` references ESLint/TypeScript.
+- **Permission issue:** `docs/`, `tools/`, `.github/` owned by user `boringx` — agent running as `ai` cannot modify. Output written to `audit-output/`.
+
+**Files Changed:**
+- `audit-output/docs/plans/garbage-collection.md` (updated with 16 prioritized tech debt items, 7 new critical items)
+- `audit-output/docs/state.md` (updated with audit results, correct test counts, blockers)
+- `audit-output/docs/plans/agent-log.md` (added this initialization entry)

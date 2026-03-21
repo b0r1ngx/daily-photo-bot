@@ -1,16 +1,34 @@
 # Project State
-**Last Updated:** 2026-03-16
+**Last Updated:** 2026-03-21
 
 ## Active Task
-None. V2.2 is complete. Awaiting deployment to VPS.
+Harness Engineering audit complete. Awaiting deployment to VPS.
 
 ## Current Status
 - **Version:** 0.2.2
 - **Branch:** `implementing-daily-photo-bot`
 - **VPS:** Running V1; V2+V2.1+V2.2 awaiting deployment
+- **Python:** 3.11+ required (dev environment running 3.13.7)
 
 ## Blockers
-None.
+- `docs/`, `tools/`, `.github/` files owned by different OS user (`boringx`). Agent cannot modify directly. Human must run: `sudo chown -R $(whoami) docs/ tools/ .github/ AGENTS.md opencode-init.md`
+
+## Audit Results (2026-03-21)
+
+### Verification Status
+- **108/108 tests passing** (34 integration + 74 unit)
+- **Layer dependency linter:** passing (0 violations)
+- **Ruff linter:** passing (0 errors)
+- **Architecture compliance:** All 5 layers (types, config, repo, service, runtime) have correct downward-only dependency flow
+
+### Tech Debt Identified
+7 critical items (stale/broken artifacts from Harness Kit template), 2 high priority, 4 medium, 3 low. See `docs/plans/garbage-collection.md` for full list.
+
+### Key Findings
+1. **Architecture: Clean.** Zero layer violations. Protocol-based DI properly decouples service from repo.
+2. **Tech stack: Aligned.** All deps match `docs/tech-stack.md` approved list.
+3. **Stale template artifacts:** JS linter, Node.js CI workflow, ESLint-referencing docs are dead code from the Harness Kit template.
+4. **Doc drift:** Test counts and version number are stale in `testing.md` and `state.md`.
 
 ## V2.2 Completed (Quick Commands)
 Two new slash commands for instant actions outside the conversation flow:
@@ -27,7 +45,7 @@ All 4 issues from GitHub Copilot's PR #1 review fixed, plus 6 additional review 
 **Copilot PR #1 Issues:**
 1. **Architecture violation** — Removed raw SQL from `schedule_handler.py` and `main.py`. Added `get_by_id_with_user_language()` and `get_owner_telegram_id()` to TopicRepo/TopicService. Removed `bot_data["db"]` and `bot_data["topic_repo"]`
 2. **Payment bypass** — `receive_new_topic()` now checks `paid_topic_pending` flag via `pop()` pattern. Two-phase: `get()` in `add_topic_menu` to route, `pop()` in `receive_new_topic` to consume
-3. **Broken payment flow** — Updated `payment_success` translations in all 5 languages to tell user to press "➕ Add topic" instead of typing topic name
+3. **Broken payment flow** — Updated `payment_success` translations in all 5 languages to tell user to press "Add topic" instead of typing topic name
 4. **Graceful shutdown** — Added signal handlers (SIGINT/SIGTERM) with Windows fallback
 
 **Post-implementation review fixes:**
@@ -53,18 +71,13 @@ All 4 issues from GitHub Copilot's PR #1 review fixed, plus 6 additional review 
 - **Phase 4: Runtime** — Telegram handlers (start, topic, schedule, payment, help), ConversationHandler state machine, keyboard layouts, app builder, main entry point with DI wiring and schedule reload
 - **Phase 5: Polish & Documentation** — README, architecture docs, testing docs, agent log
 
-## Test Status
-- **106/106 tests passing** (V2.2: +15 from V2.1's 91)
-- Layer dependency linter: passing
-- Ruff linter: passing
-
 ## Known Tech Debt
-- Timezone support not implemented (all times UTC)
-- No E2E tests for Telegram bot interaction
-- No CI/CD pipeline configured
-- mypy not yet integrated
+See `docs/plans/garbage-collection.md` for the full prioritized list (16 items).
 
 ## Next Steps
+- Fix file ownership: `sudo chown -R $(whoami) docs/ tools/ .github/ AGENTS.md opencode-init.md`
+- Apply audit output files from `audit-output/` to `docs/`
 - Deploy V2+V2.1+V2.2 to VPS
 - Gather user feedback on V2 features
+- Address critical tech debt items (dead JS linter, broken CI workflow)
 - Plan V3 based on feedback

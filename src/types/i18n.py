@@ -12,6 +12,13 @@ class SupportedLanguage(Enum):
     RU = "ru"
     PT = "pt"
     ZH = "zh"
+    HI = "hi"
+    AR = "ar"
+    MS = "ms"
+    BN = "bn"
+    FR = "fr"
+    IT = "it"
+    DE = "de"
 
 
 # All valid message keys for translation lookup.

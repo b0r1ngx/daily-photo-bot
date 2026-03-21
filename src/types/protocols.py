@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Protocol
 
 from src.types.schedule import ScheduleConfig
-from src.types.user import Topic, User
+from src.types.user import MetadataPrefs, Topic, User
 
 
 class UserRepository(Protocol):
@@ -56,6 +56,12 @@ class TopicRepository(Protocol):
     async def get_owner_telegram_id(self, topic_id: int) -> int | None:
         ...
 
+    async def get_metadata_prefs(self, topic_id: int) -> MetadataPrefs:
+        ...
+
+    async def update_metadata_prefs(self, topic_id: int, prefs: MetadataPrefs) -> None:
+        ...
+
 
 class ScheduleRepository(Protocol):
     """Interface for schedule data access."""
@@ -94,4 +100,39 @@ class SentPhotoRepository(Protocol):
         ...
 
     async def get_sent_ids(self, topic_id: int, source: str) -> set[str]:
+        ...
+
+
+class ApiRequestRecorder(Protocol):
+    """Interface for recording external API requests (used by PhotoService)."""
+
+    async def record_api_request(self, source: str) -> None:
+        ...
+
+
+class AnalyticsRepository(Protocol):
+    """Interface for analytics data access."""
+
+    async def get_total_users(self) -> int:
+        ...
+
+    async def get_users_by_language(self) -> dict[str, int]:
+        ...
+
+    async def get_active_user_count(self) -> int:
+        ...
+
+    async def get_paid_user_count(self) -> int:
+        ...
+
+    async def get_photos_sent_since(self, since_dt_text: str) -> int:
+        ...
+
+    async def get_api_requests_since(self, source: str, since_dt_text: str) -> int:
+        ...
+
+    async def record_api_request(self, source: str) -> None:
+        ...
+
+    async def cleanup_old_api_requests(self, older_than_dt_text: str) -> int:
         ...

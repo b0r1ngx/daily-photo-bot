@@ -22,6 +22,7 @@ from src.config.constants import (
     STATE_AWAITING_TOPIC,
     STATE_EDIT_TOPIC_NAME,
     STATE_MAIN_MENU,
+    STATE_METADATA_SETTINGS,
     STATE_SCHEDULE_HOUR,
     STATE_SCHEDULE_INTERVAL,
     STATE_SCHEDULE_MINUTE,
@@ -53,9 +54,13 @@ from src.runtime.handlers.start_handler import receive_first_topic, start_comman
 from src.runtime.handlers.topic_handler import add_topic_menu, receive_new_topic
 from src.runtime.handlers.topic_manage_handler import (
     delete_topic_callback,
+    metaback_callback,
+    metatoggle_callback,
     my_topics_menu,
     receive_new_topic_name,
     rename_topic_callback,
+    schedule_from_topics_callback,
+    settings_callback,
 )
 
 
@@ -70,7 +75,12 @@ def build_application() -> Application:  # type: ignore[type-arg]
 
     # Main conversation handler
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start_command)],
+        entry_points=[
+            CommandHandler("start", start_command),
+            MessageHandler(filters.Regex(add_topic_pattern), add_topic_menu),
+            MessageHandler(filters.Regex(my_topics_pattern), my_topics_menu),
+            MessageHandler(filters.Regex(schedule_pattern), schedule_menu),
+        ],
         states={
             STATE_AWAITING_TOPIC: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_first_topic),
@@ -100,8 +110,18 @@ def build_application() -> Application:  # type: ignore[type-arg]
                 CallbackQueryHandler(select_minute_callback, pattern=r"^minute_\d+$"),
             ],
             STATE_TOPIC_MANAGE: [
+                CallbackQueryHandler(
+                    schedule_from_topics_callback, pattern=r"^schedule_\d+$",
+                ),
+                CallbackQueryHandler(settings_callback, pattern=r"^settings_\d+$"),
                 CallbackQueryHandler(delete_topic_callback, pattern=r"^delete_\d+$"),
                 CallbackQueryHandler(rename_topic_callback, pattern=r"^rename_\d+$"),
+            ],
+            STATE_METADATA_SETTINGS: [
+                CallbackQueryHandler(
+                    metatoggle_callback, pattern=r"^metatoggle_\w+_\d+$",
+                ),
+                CallbackQueryHandler(metaback_callback, pattern=r"^metaback_\d+$"),
             ],
             STATE_EDIT_TOPIC_NAME: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_new_topic_name),
@@ -113,6 +133,9 @@ def build_application() -> Application:  # type: ignore[type-arg]
             CommandHandler("version", version_command),
             CommandHandler("photo", photo_command),
             CommandHandler("stop", stop_command),
+            MessageHandler(filters.Regex(add_topic_pattern), add_topic_menu),
+            MessageHandler(filters.Regex(my_topics_pattern), my_topics_menu),
+            MessageHandler(filters.Regex(schedule_pattern), schedule_menu),
         ],
     )
 

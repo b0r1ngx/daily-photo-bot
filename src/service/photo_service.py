@@ -13,6 +13,7 @@ from pathlib import Path
 import httpx
 
 from src.config.constants import (
+    METADATA_VALUE_MAX_LENGTH,
     PEXELS_MAX_PAGE,
     PEXELS_PER_PAGE,
     PEXELS_SEARCH_URL,
@@ -23,7 +24,7 @@ from src.config.constants import (
 from src.config.settings import PEXELS_API_KEY, UNSPLASH_ACCESS_KEY
 from src.types.exceptions import PhotoNotFoundError, PhotoSourceError, RateLimitError
 from src.types.photo import PhotoResult
-from src.types.protocols import SentPhotoRepository
+from src.types.protocols import ApiRequestRecorder, SentPhotoRepository
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,59 @@ def _load_search_terms() -> dict[str, dict[str, str]]:
 
 
 _SEARCH_TERMS: dict[str, dict[str, str]] = _load_search_terms()
+
+
+def _truncate(value: str, max_length: int = METADATA_VALUE_MAX_LENGTH) -> str:
+    """Truncate a string to max_length, appending '...' if needed."""
+    if len(value) <= max_length:
+        return value
+    return value[: max_length - 3] + "..."
+
+
+def _extract_description(photo: dict[str, object]) -> str:
+    """Extract a human-readable description from the Unsplash photo response.
+
+    Prefers the photographer's own description, falls back to alt_description.
+    """
+    desc = photo.get("description") or ""
+    if not isinstance(desc, str):
+        desc = ""
+    if not desc:
+        alt = photo.get("alt_description") or ""
+        desc = alt if isinstance(alt, str) else ""
+    return _truncate(desc.strip()) if desc.strip() else ""
+
+
+def _extract_location(photo: dict[str, object]) -> str:
+    """Extract a location string from the Unsplash photo response."""
+    loc = photo.get("location")
+    if not isinstance(loc, dict):
+        return ""
+    # Prefer the combined 'name' field (e.g., "Montreal, Canada")
+    name = loc.get("name")
+    if isinstance(name, str) and name.strip():
+        return _truncate(name.strip())
+    # Fallback to city + country
+    city = loc.get("city") or ""
+    country = loc.get("country") or ""
+    parts = [p for p in (city, country) if isinstance(p, str) and p.strip()]
+    return _truncate(", ".join(parts)) if parts else ""
+
+
+def _extract_camera(photo: dict[str, object]) -> str:
+    """Extract camera make/model from the Unsplash photo EXIF data."""
+    exif = photo.get("exif")
+    if not isinstance(exif, dict):
+        return ""
+    # Prefer the combined 'name' field (e.g., "Canon, EOS 40D")
+    name = exif.get("name")
+    if isinstance(name, str) and name.strip():
+        return _truncate(name.strip())
+    # Fallback to make + model
+    make = exif.get("make") or ""
+    model = exif.get("model") or ""
+    parts = [p for p in (make, model) if isinstance(p, str) and p.strip()]
+    return _truncate(", ".join(parts)) if parts else ""
 
 
 def _enrich_query(topic: str, language_code: str | None) -> str:
@@ -83,8 +137,13 @@ def _enrich_query(topic: str, language_code: str | None) -> str:
 class PhotoService:
     """Fetches unique photos from external APIs."""
 
-    def __init__(self, sent_photo_repo: SentPhotoRepository) -> None:
+    def __init__(
+        self,
+        sent_photo_repo: SentPhotoRepository,
+        api_request_recorder: ApiRequestRecorder | None = None,
+    ) -> None:
         self._sent_repo = sent_photo_repo
+        self._recorder = api_request_recorder
 
     async def get_photo(
         self, topic: str, topic_id: int, language_code: str | None = None,
@@ -155,6 +214,9 @@ class PhotoService:
                 },
             )
 
+        if self._recorder:
+            await self._recorder.record_api_request("pexels")
+
         if response.status_code == 429:
             retry_after = int(response.headers.get("Retry-After", "60"))
             raise RateLimitError("pexels", retry_after)
@@ -185,6 +247,8 @@ class PhotoService:
                         "orientation": "landscape",
                     },
                 )
+            if self._recorder:
+                await self._recorder.record_api_request("pexels")
             if response.status_code == 200:
                 photos = response.json().get("photos", [])
                 unsent = [p for p in photos if str(p["id"]) not in sent_ids]
@@ -216,6 +280,9 @@ class PhotoService:
                     "orientation": "landscape",
                 },
             )
+
+        if self._recorder:
+            await self._recorder.record_api_request("unsplash")
 
         if response.status_code == 429:
             raise RateLimitError("unsplash")
@@ -256,4 +323,7 @@ class PhotoService:
             source_url=photo["links"]["html"],
             source="unsplash",
             alt=photo.get("alt_description", query) or query,
+            description=_extract_description(photo),
+            location=_extract_location(photo),
+            camera=_extract_camera(photo),
         )

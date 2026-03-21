@@ -45,10 +45,17 @@
     "btn_remove_schedule": "🗑 Remove schedule",
     "btn_rename": "✏️ Rename",
     "btn_delete": "🗑 Delete",
+    "btn_schedule": "⏰ Schedule",
     "interval_minutes": "{count} minutes",
     "interval_hours": "{count} hours",
     "photo_no_topics": "You don't have any topics yet. Use /start to add one!",
     "photo_error": "Sorry, couldn't fetch a photo right now. Please try again later.",
     "stop_success": "✅ Stopped {count} schedule\\(s\\)\\. You won't receive automatic photos until you set up a new schedule\\.",
-    "stop_no_schedules": "You don't have any active schedules to stop."
+    "stop_no_schedules": "You don't have any active schedules to stop.",
+    "btn_settings": "⚙️ Settings",
+    "metadata_settings_title": "⚙️ *Photo details for* *{name}*",
+    "metadata_description": "Description",
+    "metadata_location": "Location",
+    "metadata_camera": "Camera",
+    "metadata_not_specified": "not specified by author"
 }

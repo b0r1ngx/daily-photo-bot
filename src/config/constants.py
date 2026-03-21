@@ -42,6 +42,10 @@ STATE_SCHEDULE_HOUR: int = 6
 STATE_SCHEDULE_MINUTE: int = 7
 STATE_TOPIC_MANAGE: int = 8
 STATE_EDIT_TOPIC_NAME: int = 9
+STATE_METADATA_SETTINGS: int = 10
+
+# Metadata display
+METADATA_VALUE_MAX_LENGTH: int = 100
 
 # Keyboard labels (used for matching in handlers)
 KB_ADD_TOPIC: str = "➕ Add topic"

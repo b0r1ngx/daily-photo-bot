@@ -8,10 +8,21 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
-from src.config.constants import STATE_EDIT_TOPIC_NAME, STATE_MAIN_MENU, STATE_TOPIC_MANAGE
+from src.config.constants import (
+    STATE_EDIT_TOPIC_NAME,
+    STATE_MAIN_MENU,
+    STATE_METADATA_SETTINGS,
+    STATE_SCHEDULE_TYPE,
+    STATE_TOPIC_MANAGE,
+)
 from src.config.i18n import t
 from src.runtime.job_utils import remove_job
-from src.runtime.keyboards import main_menu_keyboard, topic_manage_keyboard
+from src.runtime.keyboards import (
+    main_menu_keyboard,
+    metadata_settings_keyboard,
+    schedule_type_keyboard,
+    topic_manage_keyboard,
+)
 from src.service.schedule_service import ScheduleService
 from src.service.topic_service import TopicService
 
@@ -54,6 +65,44 @@ async def my_topics_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
 
     return STATE_TOPIC_MANAGE
+
+
+async def schedule_from_topics_callback(
+    update: Update, context: ContextTypes.DEFAULT_TYPE,
+) -> int:
+    """Handle 'Schedule' button press from the topic manage view."""
+    query = update.callback_query
+    if not query or not query.data:
+        return STATE_TOPIC_MANAGE
+    await query.answer()
+
+    lang = _lang(update)
+
+    try:
+        topic_id = int(query.data.split("_", 1)[1])
+    except (IndexError, ValueError):
+        await query.edit_message_text(t("invalid_selection", lang))
+        return STATE_TOPIC_MANAGE
+
+    topic_service: TopicService = context.bot_data["topic_service"]
+    user = await topic_service.ensure_user(
+        telegram_id=query.from_user.id,
+        username=query.from_user.username or "",
+        first_name=query.from_user.first_name or "",
+        language_code=query.from_user.language_code,
+    )
+    topic = await topic_service.get_topic(topic_id)
+    if not topic or not user.id or topic.user_id != user.id:
+        await query.edit_message_text(t("topic_not_found", lang))
+        return STATE_TOPIC_MANAGE
+
+    context.user_data["schedule_topic_id"] = topic_id
+
+    await query.edit_message_text(
+        t("schedule_type_prompt", lang),
+        reply_markup=schedule_type_keyboard(lang),
+    )
+    return STATE_SCHEDULE_TYPE
 
 
 async def delete_topic_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -162,3 +211,115 @@ async def receive_new_topic_name(update: Update, context: ContextTypes.DEFAULT_T
         reply_markup=main_menu_keyboard(),
     )
     return STATE_MAIN_MENU
+
+
+async def settings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle 'Settings' button press — show metadata toggle keyboard."""
+    query = update.callback_query
+    if not query or not query.data:
+        return STATE_TOPIC_MANAGE
+    await query.answer()
+
+    lang = _lang(update)
+
+    try:
+        topic_id = int(query.data.split("_", 1)[1])
+    except (IndexError, ValueError):
+        await query.edit_message_text(t("invalid_selection", lang))
+        return STATE_TOPIC_MANAGE
+
+    topic_service: TopicService = context.bot_data["topic_service"]
+    user = await topic_service.ensure_user(
+        telegram_id=query.from_user.id,
+        username=query.from_user.username or "",
+        first_name=query.from_user.first_name or "",
+        language_code=query.from_user.language_code,
+    )
+    topic = await topic_service.get_topic(topic_id)
+    if not topic or not user.id or topic.user_id != user.id:
+        await query.edit_message_text(t("topic_not_found", lang))
+        return STATE_TOPIC_MANAGE
+
+    prefs = await topic_service.get_metadata_prefs(topic_id)
+
+    await query.edit_message_text(
+        t("metadata_settings_title", lang, name=escape_markdown(topic.name, version=2)),
+        parse_mode="MarkdownV2",
+        reply_markup=metadata_settings_keyboard(topic_id, prefs, lang),
+    )
+    return STATE_METADATA_SETTINGS
+
+
+async def metatoggle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle metadata toggle button press — toggle a field and re-render."""
+    query = update.callback_query
+    if not query or not query.data:
+        return STATE_METADATA_SETTINGS
+    await query.answer()
+
+    lang = _lang(update)
+
+    # Parse: "metatoggle_{field}_{topic_id}"
+    parts = query.data.split("_")
+    if len(parts) != 3:
+        await query.edit_message_text(t("invalid_selection", lang))
+        return STATE_METADATA_SETTINGS
+
+    field = parts[1]
+    try:
+        topic_id = int(parts[2])
+    except ValueError:
+        await query.edit_message_text(t("invalid_selection", lang))
+        return STATE_METADATA_SETTINGS
+
+    topic_service: TopicService = context.bot_data["topic_service"]
+    user = await topic_service.ensure_user(
+        telegram_id=query.from_user.id,
+        username=query.from_user.username or "",
+        first_name=query.from_user.first_name or "",
+        language_code=query.from_user.language_code,
+    )
+    topic = await topic_service.get_topic(topic_id)
+    if not topic or not user.id or topic.user_id != user.id:
+        await query.edit_message_text(t("topic_not_found", lang))
+        return STATE_METADATA_SETTINGS
+
+    try:
+        new_prefs = await topic_service.toggle_metadata_field(topic_id, field)
+    except ValueError:
+        await query.edit_message_text(t("invalid_selection", lang))
+        return STATE_METADATA_SETTINGS
+
+    await query.edit_message_reply_markup(
+        reply_markup=metadata_settings_keyboard(topic_id, new_prefs, lang),
+    )
+    return STATE_METADATA_SETTINGS
+
+
+async def metaback_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Handle 'Back' button from metadata settings — return to topic manage view."""
+    query = update.callback_query
+    if not query or not query.data:
+        return STATE_METADATA_SETTINGS
+    await query.answer()
+
+    lang = _lang(update)
+
+    try:
+        topic_id = int(query.data.split("_", 1)[1])
+    except (IndexError, ValueError):
+        await query.edit_message_text(t("invalid_selection", lang))
+        return STATE_TOPIC_MANAGE
+
+    topic_service: TopicService = context.bot_data["topic_service"]
+    topic = await topic_service.get_topic(topic_id)
+    if not topic:
+        await query.edit_message_text(t("topic_not_found", lang))
+        return STATE_TOPIC_MANAGE
+
+    await query.edit_message_text(
+        t("topic_name_display", lang, name=escape_markdown(topic.name, version=2)),
+        parse_mode="MarkdownV2",
+        reply_markup=topic_manage_keyboard(topic, lang),
+    )
+    return STATE_TOPIC_MANAGE

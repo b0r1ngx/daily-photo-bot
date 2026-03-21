@@ -12,6 +12,13 @@ class SupportedLanguage(Enum):
     RU = "ru"
     PT = "pt"
     ZH = "zh"
+    HI = "hi"
+    AR = "ar"
+    MS = "ms"
+    BN = "bn"
+    FR = "fr"
+    IT = "it"
+    DE = "de"
 
 
 # All valid message keys for translation lookup.
@@ -62,10 +69,17 @@ MessageKey = Literal[
     "btn_remove_schedule",
     "btn_rename",
     "btn_delete",
+    "btn_schedule",
     "interval_minutes",
     "interval_hours",
     "photo_no_topics",
     "photo_error",
     "stop_success",
     "stop_no_schedules",
+    "btn_settings",
+    "metadata_settings_title",
+    "metadata_description",
+    "metadata_location",
+    "metadata_camera",
+    "metadata_not_specified",
 ]

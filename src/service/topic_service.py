@@ -7,7 +7,7 @@ import re
 from src.config.settings import FREE_TOPICS_LIMIT
 from src.types.exceptions import TopicLimitError
 from src.types.protocols import TopicRepository, UserRepository
-from src.types.user import Topic, User
+from src.types.user import MetadataPrefs, Topic, User
 
 logger = logging.getLogger(__name__)
 
@@ -111,3 +111,45 @@ class TopicService:
     async def get_owner_telegram_id(self, topic_id: int) -> int | None:
         """Get Telegram ID of the topic's owner (for schedule reload)."""
         return await self._topic_repo.get_owner_telegram_id(topic_id)
+
+    async def get_metadata_prefs(self, topic_id: int) -> MetadataPrefs:
+        """Get metadata display preferences for a topic."""
+        return await self._topic_repo.get_metadata_prefs(topic_id)
+
+    async def update_metadata_prefs(
+        self, topic_id: int, prefs: MetadataPrefs,
+    ) -> None:
+        """Update metadata display preferences for a topic."""
+        await self._topic_repo.update_metadata_prefs(topic_id, prefs)
+
+    async def toggle_metadata_field(
+        self, topic_id: int, field: str,
+    ) -> MetadataPrefs:
+        """Toggle a single metadata preference field.
+
+        Args:
+            topic_id: Database topic ID.
+            field: One of 'description', 'location', 'camera'.
+
+        Returns:
+            Updated MetadataPrefs after toggle.
+
+        Raises:
+            ValueError: If field name is not valid.
+        """
+        valid_fields = {"description", "location", "camera"}
+        if field not in valid_fields:
+            raise ValueError(
+                f"Invalid metadata field: '{field}'. Must be one of {valid_fields}."
+            )
+
+        current = await self._topic_repo.get_metadata_prefs(topic_id)
+        toggled = {
+            "show_description": current.show_description,
+            "show_location": current.show_location,
+            "show_camera": current.show_camera,
+        }
+        toggled[f"show_{field}"] = not toggled[f"show_{field}"]
+        new_prefs = MetadataPrefs(**toggled)
+        await self._topic_repo.update_metadata_prefs(topic_id, new_prefs)
+        return new_prefs

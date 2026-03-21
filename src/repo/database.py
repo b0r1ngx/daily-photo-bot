@@ -14,6 +14,17 @@ logger = logging.getLogger(__name__)
 
 _MIGRATIONS: list[tuple[int, str]] = [
     (1, "ALTER TABLE users ADD COLUMN language_code TEXT DEFAULT NULL"),
+    (
+        2,
+        "CREATE TABLE IF NOT EXISTS api_requests ("
+        "    id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "    source TEXT NOT NULL CHECK(source IN ('pexels', 'unsplash')),"
+        "    requested_at TEXT DEFAULT (datetime('now'))"
+        ");"
+        "CREATE INDEX IF NOT EXISTS idx_api_requests_source_date "
+        "ON api_requests(source, requested_at);",
+    ),
+    (3, "ALTER TABLE topics ADD COLUMN metadata_prefs TEXT DEFAULT NULL"),
 ]
 
 _DDL = """
@@ -32,6 +43,7 @@ CREATE TABLE IF NOT EXISTS topics (
     name TEXT NOT NULL,
     is_free INTEGER DEFAULT 1,
     is_active INTEGER DEFAULT 1,
+    metadata_prefs TEXT DEFAULT NULL,
     created_at TEXT DEFAULT (datetime('now'))
 );
 
@@ -56,6 +68,14 @@ CREATE TABLE IF NOT EXISTS sent_photos (
 CREATE INDEX IF NOT EXISTS idx_sent_photos_topic ON sent_photos(topic_id);
 CREATE INDEX IF NOT EXISTS idx_topics_user ON topics(user_id);
 CREATE INDEX IF NOT EXISTS idx_schedules_active ON schedules(is_active);
+
+CREATE TABLE IF NOT EXISTS api_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source TEXT NOT NULL CHECK(source IN ('pexels', 'unsplash')),
+    requested_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_api_requests_source_date ON api_requests(source, requested_at);
 """
 
 
@@ -104,7 +124,7 @@ async def run_migrations(db: aiosqlite.Connection) -> None:
             continue
 
         try:
-            await db.execute(sql)
+            await db.executescript(sql)
             await db.execute("INSERT INTO schema_version (version) VALUES (?)", (version,))
             await db.commit()
             logger.info("Applied migration v%d.", version)

@@ -45,10 +45,17 @@
     "btn_remove_schedule": "🗑 Удалить расписание",
     "btn_rename": "✏️ Переименовать",
     "btn_delete": "🗑 Удалить",
+    "btn_schedule": "⏰ Расписание",
     "interval_minutes": "{count} минут",
     "interval_hours": "{count} часов",
     "photo_no_topics": "У вас ещё нет тем. Используйте /start, чтобы добавить!",
     "photo_error": "Не удалось получить фото. Попробуйте позже.",
     "stop_success": "✅ Остановлено расписаний: {count}\\. Автоматические фото приостановлены до настройки нового расписания\\.",
-    "stop_no_schedules": "У вас нет активных расписаний для остановки."
+    "stop_no_schedules": "У вас нет активных расписаний для остановки.",
+    "btn_settings": "⚙️ Настройки",
+    "metadata_settings_title": "⚙️ *Детали фото для* *{name}*",
+    "metadata_description": "Описание",
+    "metadata_location": "Местоположение",
+    "metadata_camera": "Камера",
+    "metadata_not_specified": "не указано автором"
 }

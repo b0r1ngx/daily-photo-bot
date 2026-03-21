@@ -8,7 +8,7 @@ import pytest
 
 from src.service.topic_service import TopicService
 from src.types.exceptions import TopicLimitError
-from src.types.user import Topic, User
+from src.types.user import MetadataPrefs, Topic, User
 
 
 @pytest.fixture
@@ -111,3 +111,42 @@ async def test_get_owner_telegram_id(service: TopicService, topic_repo) -> None:
     result = await service.get_owner_telegram_id(42)
     assert result == 12345
     topic_repo.get_owner_telegram_id.assert_awaited_once_with(42)
+
+
+@pytest.mark.asyncio
+async def test_get_metadata_prefs_default(service: TopicService, topic_repo) -> None:
+    """get_metadata_prefs returns defaults from repo."""
+    topic_repo.get_metadata_prefs.return_value = MetadataPrefs()
+    result = await service.get_metadata_prefs(1)
+    assert result.show_description is True
+    assert result.show_location is True
+    assert result.show_camera is True
+    topic_repo.get_metadata_prefs.assert_awaited_once_with(1)
+
+
+@pytest.mark.asyncio
+async def test_update_metadata_prefs(service: TopicService, topic_repo) -> None:
+    """update_metadata_prefs delegates to repo."""
+    prefs = MetadataPrefs(show_description=False, show_location=True, show_camera=False)
+    await service.update_metadata_prefs(1, prefs)
+    topic_repo.update_metadata_prefs.assert_awaited_once_with(1, prefs)
+
+
+@pytest.mark.asyncio
+async def test_toggle_metadata_field(service: TopicService, topic_repo) -> None:
+    """toggle_metadata_field toggles a single field and saves."""
+    topic_repo.get_metadata_prefs.return_value = MetadataPrefs(
+        show_description=True, show_location=True, show_camera=True,
+    )
+    result = await service.toggle_metadata_field(1, "description")
+    assert result.show_description is False
+    assert result.show_location is True
+    assert result.show_camera is True
+    topic_repo.update_metadata_prefs.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_toggle_metadata_field_invalid(service: TopicService) -> None:
+    """toggle_metadata_field raises ValueError for invalid field."""
+    with pytest.raises(ValueError, match="Invalid metadata field"):
+        await service.toggle_metadata_field(1, "invalid_field")

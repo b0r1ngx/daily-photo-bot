@@ -1,11 +1,12 @@
 """Topic repository. Layer: Repo (depends on: types, config)."""
 from __future__ import annotations
 
+import json
 import logging
 
 import aiosqlite
 
-from src.types.user import Topic
+from src.types.user import MetadataPrefs, Topic
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +115,41 @@ class TopicRepo:
         )
         row = await cursor.fetchone()
         return row[0] if row else None
+
+    async def get_metadata_prefs(self, topic_id: int) -> MetadataPrefs:
+        """Get metadata display preferences for a topic.
+
+        Returns MetadataPrefs with all defaults (True) if the column is NULL.
+        """
+        cursor = await self._db.execute(
+            "SELECT metadata_prefs FROM topics WHERE id = ? AND is_active = 1",
+            (topic_id,),
+        )
+        row = await cursor.fetchone()
+        if not row or row[0] is None:
+            return MetadataPrefs()
+        data = json.loads(row[0])
+        return MetadataPrefs(
+            show_description=data.get("show_description", True),
+            show_location=data.get("show_location", True),
+            show_camera=data.get("show_camera", True),
+        )
+
+    async def update_metadata_prefs(self, topic_id: int, prefs: MetadataPrefs) -> None:
+        """Save metadata preferences as JSON."""
+        data = json.dumps({
+            "show_description": prefs.show_description,
+            "show_location": prefs.show_location,
+            "show_camera": prefs.show_camera,
+        })
+        cursor = await self._db.execute(
+            "UPDATE topics SET metadata_prefs = ? WHERE id = ? AND is_active = 1",
+            (data, topic_id),
+        )
+        await self._db.commit()
+        if cursor.rowcount == 0:
+            raise ValueError(f"Topic {topic_id} not found or inactive")
+        logger.info("Updated metadata_prefs for topic_id=%d", topic_id)
 
     @staticmethod
     def _row_to_topic(row: aiosqlite.Row) -> Topic:

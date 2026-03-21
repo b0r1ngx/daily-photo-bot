@@ -45,10 +45,17 @@
     "btn_remove_schedule": "🗑 Eliminar horario",
     "btn_rename": "✏️ Renombrar",
     "btn_delete": "🗑 Eliminar",
+    "btn_schedule": "⏰ Horario",
     "interval_minutes": "{count} minutos",
     "interval_hours": "{count} horas",
     "photo_no_topics": "No tienes ningún tema todavía. ¡Usa /start para añadir uno!",
     "photo_error": "Lo siento, no pude obtener una foto ahora. Inténtalo más tarde.",
     "stop_success": "✅ Se detuvieron {count} horario\\(s\\)\\. No recibirás fotos automáticas hasta configurar uno nuevo\\.",
-    "stop_no_schedules": "No tienes horarios activos para detener."
+    "stop_no_schedules": "No tienes horarios activos para detener.",
+    "btn_settings": "⚙️ Configuración",
+    "metadata_settings_title": "⚙️ *Detalles de foto para* *{name}*",
+    "metadata_description": "Descripción",
+    "metadata_location": "Ubicación",
+    "metadata_camera": "Cámara",
+    "metadata_not_specified": "no especificado por el autor"
 }

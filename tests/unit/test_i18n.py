@@ -36,6 +36,48 @@ def test_t_chinese():
     assert result != t("action_cancelled", "en")
 
 
+def test_t_hindi():
+    """Hindi translation returned for Hindi language code."""
+    result = t("action_cancelled", "hi")
+    assert result != t("action_cancelled", "en")
+
+
+def test_t_arabic():
+    """Arabic translation returned for Arabic language code."""
+    result = t("action_cancelled", "ar")
+    assert result != t("action_cancelled", "en")
+
+
+def test_t_malay():
+    """Malay translation returned for Malay language code."""
+    result = t("action_cancelled", "ms")
+    assert result != t("action_cancelled", "en")
+
+
+def test_t_bengali():
+    """Bengali translation returned for Bengali language code."""
+    result = t("action_cancelled", "bn")
+    assert result != t("action_cancelled", "en")
+
+
+def test_t_french():
+    """French translation returned for French language code."""
+    result = t("action_cancelled", "fr")
+    assert result != t("action_cancelled", "en")
+
+
+def test_t_italian():
+    """Italian translation returned for Italian language code."""
+    result = t("action_cancelled", "it")
+    assert result != t("action_cancelled", "en")
+
+
+def test_t_german():
+    """German translation returned for German language code."""
+    result = t("action_cancelled", "de")
+    assert result != t("action_cancelled", "en")
+
+
 def test_t_with_kwargs():
     """Format placeholders are filled."""
     result = t("version_text", "en", version="1.0")
@@ -44,7 +86,7 @@ def test_t_with_kwargs():
 
 def test_t_with_kwargs_all_languages():
     """Format placeholders work in all languages."""
-    for lang in ("en", "es", "ru", "pt", "zh"):
+    for lang in ("en", "es", "ru", "pt", "zh", "hi", "ar", "ms", "bn", "fr", "it", "de"):
         result = t("version_text", lang, version="2.5")
         assert "2.5" in result
 
@@ -88,16 +130,23 @@ def test_resolve_language_supported():
     assert _resolve_language("ru") == "ru"
     assert _resolve_language("pt") == "pt"
     assert _resolve_language("zh") == "zh"
+    assert _resolve_language("hi") == "hi"
+    assert _resolve_language("ar") == "ar"
+    assert _resolve_language("ms") == "ms"
+    assert _resolve_language("bn") == "bn"
+    assert _resolve_language("fr") == "fr"
+    assert _resolve_language("it") == "it"
+    assert _resolve_language("de") == "de"
 
 
 def test_resolve_language_unsupported():
     """Unsupported language falls back to English."""
     assert _resolve_language("ja") == "en"
-    assert _resolve_language("de") == "en"
-    assert _resolve_language("fr") == "en"
+    assert _resolve_language("ko") == "en"
+    assert _resolve_language("sv") == "en"
 
 
-@pytest.mark.parametrize("lang", ["en", "es", "ru", "pt", "zh"])
+@pytest.mark.parametrize("lang", ["en", "es", "ru", "pt", "zh", "hi", "ar", "ms", "bn", "fr", "it", "de"])
 def test_all_message_keys_present(lang: str):
     """Every language file contains all required keys."""
     # Test a representative set of keys across all languages
@@ -117,6 +166,12 @@ def test_all_message_keys_present(lang: str):
         "photo_caption",
         "payment_failed",
         "payment_success",
+        "btn_settings",
+        "metadata_settings_title",
+        "metadata_description",
+        "metadata_location",
+        "metadata_camera",
+        "metadata_not_specified",
     ]
     for key in keys:
         result = t(key, lang)  # type: ignore[arg-type]

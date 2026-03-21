@@ -9,7 +9,7 @@ import signal
 from telegram.ext import Application
 
 from src.config.logging import setup_logging
-from src.config.settings import DATABASE_PATH
+from src.config.settings import ANALYTICS_GROUP_ID, DATABASE_PATH
 from src.service.schedule_service import ScheduleService
 from src.service.topic_service import TopicService
 
@@ -18,12 +18,14 @@ logger = logging.getLogger(__name__)
 
 async def _startup() -> None:
     """Initialize database, services, and start the bot."""
+    from src.repo.analytics_repo import AnalyticsRepo
     from src.repo.database import get_connection, init_db
     from src.repo.schedule_repo import ScheduleRepo
     from src.repo.sent_photo_repo import SentPhotoRepo
     from src.repo.topic_repo import TopicRepo
     from src.repo.user_repo import UserRepo
     from src.runtime.app import build_application
+    from src.service.analytics_service import AnalyticsService
     from src.service.payment_service import PaymentService
     from src.service.photo_service import PhotoService
     from src.service.schedule_service import ScheduleService
@@ -39,12 +41,17 @@ async def _startup() -> None:
     topic_repo = TopicRepo(db)
     schedule_repo = ScheduleRepo(db)
     sent_photo_repo = SentPhotoRepo(db)
+    analytics_repo = AnalyticsRepo(db)
 
     # Create services (inject repos)
     topic_service = TopicService(user_repo=user_repo, topic_repo=topic_repo)
-    photo_service = PhotoService(sent_photo_repo=sent_photo_repo)
+    photo_service = PhotoService(
+        sent_photo_repo=sent_photo_repo,
+        api_request_recorder=analytics_repo,
+    )
     schedule_service = ScheduleService(schedule_repo=schedule_repo)
     payment_service = PaymentService()
+    analytics_service = AnalyticsService(analytics_repo=analytics_repo)
 
     # Build Telegram application
     app = build_application()
@@ -54,9 +61,24 @@ async def _startup() -> None:
     app.bot_data["photo_service"] = photo_service
     app.bot_data["schedule_service"] = schedule_service
     app.bot_data["payment_service"] = payment_service
+    app.bot_data["analytics_service"] = analytics_service
 
     # Reload schedules from database
     await _reload_schedules(app, schedule_service, topic_service)
+
+    # Register daily analytics job (if group configured)
+    if ANALYTICS_GROUP_ID is not None:
+        from src.runtime.handlers.analytics_handler import send_daily_analytics
+
+        app.job_queue.run_daily(  # type: ignore[union-attr]
+            send_daily_analytics,
+            time=datetime.time(hour=0, minute=0),
+            name="daily_analytics",
+        )
+        logger.info(
+            "Analytics job registered: daily at 00:00 UTC -> group %d",
+            ANALYTICS_GROUP_ID,
+        )
 
     logger.info("🤖 Daily Photo Bot starting...")
 

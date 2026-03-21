@@ -45,10 +45,17 @@
     "btn_remove_schedule": "🗑 Remover horário",
     "btn_rename": "✏️ Renomear",
     "btn_delete": "🗑 Excluir",
+    "btn_schedule": "⏰ Horário",
     "interval_minutes": "{count} minutos",
     "interval_hours": "{count} horas",
     "photo_no_topics": "Você ainda não tem nenhum tema. Use /start para adicionar!",
     "photo_error": "Desculpe, não foi possível buscar uma foto agora. Tente mais tarde.",
     "stop_success": "✅ {count} agendamento\\(s\\) parado\\(s\\)\\. Você não receberá fotos automáticas até configurar um novo\\.",
-    "stop_no_schedules": "Você não tem agendamentos ativos para parar."
+    "stop_no_schedules": "Você não tem agendamentos ativos para parar.",
+    "btn_settings": "⚙️ Configurações",
+    "metadata_settings_title": "⚙️ *Detalhes da foto para* *{name}*",
+    "metadata_description": "Descrição",
+    "metadata_location": "Localização",
+    "metadata_camera": "Câmera",
+    "metadata_not_specified": "não especificado pelo autor"
 }

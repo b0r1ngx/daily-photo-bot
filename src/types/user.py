@@ -27,3 +27,12 @@ class Topic:
     is_active: bool = True
     id: int | None = None
     created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class MetadataPrefs:
+    """Per-topic preferences for which metadata fields to display with photos."""
+
+    show_description: bool = True
+    show_location: bool = True
+    show_camera: bool = True

@@ -70,7 +70,12 @@ def build_application() -> Application:  # type: ignore[type-arg]
 
     # Main conversation handler
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start_command)],
+        entry_points=[
+            CommandHandler("start", start_command),
+            MessageHandler(filters.Regex(add_topic_pattern), add_topic_menu),
+            MessageHandler(filters.Regex(my_topics_pattern), my_topics_menu),
+            MessageHandler(filters.Regex(schedule_pattern), schedule_menu),
+        ],
         states={
             STATE_AWAITING_TOPIC: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_first_topic),
@@ -113,6 +118,9 @@ def build_application() -> Application:  # type: ignore[type-arg]
             CommandHandler("version", version_command),
             CommandHandler("photo", photo_command),
             CommandHandler("stop", stop_command),
+            MessageHandler(filters.Regex(add_topic_pattern), add_topic_menu),
+            MessageHandler(filters.Regex(my_topics_pattern), my_topics_menu),
+            MessageHandler(filters.Regex(schedule_pattern), schedule_menu),
         ],
     )
 

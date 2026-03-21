@@ -111,10 +111,9 @@ This file tracks the reasoning and autonomous actions taken by AI Agents in this
 - **Architecture compliance: Excellent.** All 5 layers have strictly downward dependency flow. Protocol-based DI properly decouples service from repo layers. Zero violations.
 - **Tech stack compliance: Full.** python-telegram-bot, aiosqlite, httpx, python-dotenv, pytest, ruff — all match approved stack.
 - **Dead code:** `layer-dependency-check.js` (JS linter for a Python project), `ai-garbage-collect.yml` (Node.js workflow for a Python project).
-- **Doc drift:** Test counts stale (docs say 79/106, actual is 108), version mismatch (`pyproject.toml` says 0.1.0, should be 0.2.2), `agent-linters.md` references ESLint/TypeScript.
-- **Permission issue:** `docs/`, `tools/`, `.github/` owned by user `boringx` — agent running as `ai` cannot modify. Output written to `audit-output/`.
+- **Doc drift:** Test counts stale (docs say 79/106, actual is 108), version mismatch (`pyproject.toml` says 0.1.0, should be 0.2.3), `agent-linters.md` references ESLint/TypeScript, `state.md` referenced wrong branch and deployment status.
 
 **Files Changed:**
 - `audit-output/docs/plans/garbage-collection.md` (updated with 16 prioritized tech debt items, 7 new critical items)
-- `audit-output/docs/state.md` (updated with audit results, correct test counts, blockers)
+- `audit-output/docs/state.md` (updated with correct version 0.2.3, branch master, production status, audit results)
 - `audit-output/docs/plans/agent-log.md` (added this initialization entry)

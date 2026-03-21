@@ -26,12 +26,12 @@ Items to address in future sessions. Ordered by priority.
 **Fix:** Update to reflect actual directory contents.
 
 ### 5. Version Mismatch in `pyproject.toml`
-**Issue:** `pyproject.toml` declares `version = "0.1.0"` but `docs/state.md` and `BOT_VERSION` constant say `0.2.2`.
-**Fix:** Update `pyproject.toml` version to `"0.2.2"`.
+**Issue:** `pyproject.toml` declares `version = "0.1.0"` but `BOT_VERSION` in `src/config/constants.py` says `0.2.3`.
+**Fix:** Update `pyproject.toml` version to `"0.2.3"`.
 
 ### 6. Stale Test Counts in Documentation
-**Issue:** `docs/testing.md` says "79 tests (20 integration + 59 unit)". `docs/state.md` says "106/106 tests passing". Actual count is **108 tests passing** (34 integration + 74 unit).
-**Fix:** Update both files with correct counts.
+**Issue:** `docs/testing.md` says "79 tests (20 integration + 59 unit)". `docs/state.md` said "106/106 tests passing". Actual count is **108 tests passing** (34 integration + 74 unit).
+**Fix:** Update `docs/testing.md` with correct counts.
 
 ### 7. `opencode-init.md` References JS Linter
 **Issue:** Says "Pay attention to the execution of the `tools/ai-linters/layer-dependency-check.js` script" — should reference `.py`.

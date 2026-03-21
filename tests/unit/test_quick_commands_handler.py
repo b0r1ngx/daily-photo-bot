@@ -224,7 +224,7 @@ class TestPhotoCommand:
 # ===========================================================================
 
 
-@patch("src.runtime.handlers.quick_commands_handler.remove_job")
+@patch("src.runtime.job_utils.remove_job")
 class TestStopCommand:
     """Tests for the /stop command handler."""
 

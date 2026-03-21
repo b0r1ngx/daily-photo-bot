@@ -1,14 +1,16 @@
 # Project State
-**Last Updated:** 2026-03-21
+**Last Updated:** 2026-03-22
 
 ## Active Task
 All 7 tasks from `docs/plans/todo-list.md` are complete.
 Copilot review fixes (rounds 1 and 2) for PR #4 are complete.
+Copilot review fixes for PRs #5 and #6 are complete.
 `/analytics` on-demand command added for the admin group.
+Forbidden error handling added to scheduled photo delivery.
 
 ## Current Status
-- **Version:** 3.1.0 (source: `src/config/constants.py:BOT_VERSION`)
-- **Branch:** `v3`
+- **Version:** 3.3.0 (source: `src/config/constants.py:BOT_VERSION`)
+- **Branch:** `v3.3`
 - **VPS:** Running V2.3 (deployed, production)
 - **Python:** 3.11+ required (dev environment running 3.13.7)
 
@@ -24,15 +26,29 @@ Copilot review fixes (rounds 1 and 2) for PR #4 are complete.
 7. **Task 2 (Photo Metadata)** — Per-topic metadata display preferences (description, location, camera). `MetadataPrefs` dataclass, `build_photo_caption()` shared caption builder, metadata extraction from Unsplash API (description/alt, location.name, exif.name). Settings UI with toggle keyboard (✅/❌). Migration v3. 22 new tests. 6 new i18n keys across 12 languages.
 
 ## Verification Status
-- **185/185 tests passing** (55 integration + 130 unit)
+- **191/191 tests passing** (55 integration + 136 unit)
 - **Layer dependency linter:** passing (0 violations)
 - **Ruff linter:** passing (0 errors)
 - **Architecture compliance:** All 5 layers (types, config, repo, service, runtime) have correct downward-only dependency flow
 
-## V2.4 Copilot Review Fixes (PR #4)
+## V3.3 Fixes (Branch: v3.3)
+
+### Forbidden Error Handling
+- **`telegram.error.Forbidden` handling** — When `send_photo` raises `Forbidden` (user blocked the bot), all schedules for that user are deactivated and in-memory jobs removed. Prevents wasted API calls on blocked users. Shared helper `deactivate_all_user_schedules()` in `job_utils.py` used by both Forbidden handler and `/stop` command. Fallback: if topic is deleted, deactivates orphaned schedule in DB and removes the triggering job. 6 new unit tests in `test_schedule_handler.py`.
+
+### Copilot PR #7 Fixes
+1. **Fix orphaned schedule on Forbidden + deleted topic** — When `send_photo` raises `Forbidden` and the topic no longer exists in DB, the schedule was only removed from memory but not deactivated in the database. On restart, the orphaned active schedule would be reloaded and keep failing. Now calls `schedule_service.remove_schedule()` before `remove_job()`.
+2. **DRY: extract `deactivate_all_user_schedules` to `job_utils.py`** — The inline deactivation loop in `/stop` command (`quick_commands_handler.py`) and `_deactivate_all_user_schedules()` in `schedule_handler.py` were structurally identical. Extracted to shared `deactivate_all_user_schedules()` in `job_utils.py`.
+
+### Copilot PR #5 Fixes
+1. **Add `exc_info=True`** to corrupted `metadata_prefs` JSON warning in `topic_repo.py` — includes traceback for diagnostics.
+2. **Add `assert_awaited()`** to unsplash fallback recorder test in `test_photo_service.py` — verifies the recorder was actually called.
+3. **CancelledError concern** — Confirmed false positive. `asyncio.CancelledError` inherits from `BaseException` (not `Exception`) since Python 3.9, so `except Exception` cannot catch it.
 
 ### On-Demand Analytics Command
 - **`/analytics` command** — Sends the same daily analytics report on demand when invoked in the analytics admin group. Restricted to `ANALYTICS_GROUP_ID` only (silently ignored elsewhere). Registered as standalone `CommandHandler` outside the `ConversationHandler`. 5 new unit tests.
+
+## V2.4 Copilot Review Fixes (PR #4)
 
 ### Round 1
 1. **Rename `since_iso` → `since_dt_text`** — Parameter names and docstrings in `AnalyticsRepository` protocol and `AnalyticsRepo` implementation renamed to accurately reflect SQLite datetime text format (`YYYY-MM-DD HH:MM:SS`), not ISO-8601. Also renamed `older_than_iso` → `older_than_dt_text`.

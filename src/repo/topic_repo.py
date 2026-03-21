@@ -132,7 +132,9 @@ class TopicRepo:
             data = json.loads(row[0])
         except json.JSONDecodeError:
             logger.warning(
-                "Corrupted metadata_prefs JSON for topic_id=%d, using defaults.", topic_id,
+                "Corrupted metadata_prefs JSON for topic_id=%d, using defaults.",
+                topic_id,
+                exc_info=True,
             )
             return MetadataPrefs()
         return MetadataPrefs(

@@ -6,6 +6,7 @@ import datetime
 import logging
 
 from telegram import Update
+from telegram.error import Forbidden
 from telegram.ext import ContextTypes
 
 from src.config.constants import (
@@ -18,7 +19,7 @@ from src.config.constants import (
 )
 from src.config.i18n import t
 from src.runtime.caption import build_photo_caption
-from src.runtime.job_utils import remove_job
+from src.runtime.job_utils import deactivate_all_user_schedules, remove_job
 from src.runtime.keyboards import (
     hour_keyboard,
     interval_keyboard,
@@ -294,6 +295,34 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
             caption=caption,
             parse_mode="MarkdownV2",
         )
+    except Forbidden:
+        try:
+            topic = await topic_service.get_topic(topic_id)
+            if topic:
+                count = await deactivate_all_user_schedules(
+                    topic.user_id, topic_service, schedule_service, context,
+                )
+                logger.warning(
+                    "User blocked bot (chat_id=%d). Deactivated %d schedule(s) for user_id=%d.",
+                    job.chat_id,
+                    count,
+                    topic.user_id,
+                )
+            else:
+                logger.warning(
+                    "User blocked bot (chat_id=%d). Topic %d not found, removing its job.",
+                    job.chat_id,
+                    topic_id,
+                )
+                await schedule_service.remove_schedule(topic_id)
+                remove_job(f"photo_{topic_id}", context)
+        except Exception:
+            logger.exception(
+                "Failed to handle Forbidden error for chat_id=%d, topic_id=%d",
+                job.chat_id,
+                topic_id,
+            )
+        return
     except Exception:
         logger.exception("Failed to send photo to chat %d", job.chat_id)
         return

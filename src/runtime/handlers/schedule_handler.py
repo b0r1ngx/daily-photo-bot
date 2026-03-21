@@ -296,25 +296,32 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
             parse_mode="MarkdownV2",
         )
     except Forbidden:
-        topic = await topic_service.get_topic(topic_id)
-        if topic:
-            count = await deactivate_all_user_schedules(
-                topic.user_id, topic_service, schedule_service, context,
-            )
-            logger.warning(
-                "User blocked bot (chat_id=%d). Deactivated %d schedule(s) for user_id=%d.",
-                job.chat_id,
-                count,
-                topic.user_id,
-            )
-        else:
-            logger.warning(
-                "User blocked bot (chat_id=%d). Topic %d not found, removing its job.",
+        try:
+            topic = await topic_service.get_topic(topic_id)
+            if topic:
+                count = await deactivate_all_user_schedules(
+                    topic.user_id, topic_service, schedule_service, context,
+                )
+                logger.warning(
+                    "User blocked bot (chat_id=%d). Deactivated %d schedule(s) for user_id=%d.",
+                    job.chat_id,
+                    count,
+                    topic.user_id,
+                )
+            else:
+                logger.warning(
+                    "User blocked bot (chat_id=%d). Topic %d not found, removing its job.",
+                    job.chat_id,
+                    topic_id,
+                )
+                await schedule_service.remove_schedule(topic_id)
+                remove_job(f"photo_{topic_id}", context)
+        except Exception:
+            logger.exception(
+                "Failed to handle Forbidden error for chat_id=%d, topic_id=%d",
                 job.chat_id,
                 topic_id,
             )
-            await schedule_service.remove_schedule(topic_id)
-            remove_job(f"photo_{topic_id}", context)
         return
     except Exception:
         logger.exception("Failed to send photo to chat %d", job.chat_id)

@@ -49,7 +49,7 @@ async def deactivate_all_user_schedules(
                 deactivated += 1
         except Exception:
             logger.exception(
-                "Failed to deactivate schedule for topic %d during user cleanup",
+                "Failed to deactivate schedule for topic %d",
                 topic.id,
             )
     return deactivated

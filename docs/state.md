@@ -10,7 +10,7 @@ Forbidden error handling added to scheduled photo delivery.
 
 ## Current Status
 - **Version:** 3.3.0 (source: `src/config/constants.py:BOT_VERSION`)
-- **Branch:** `v3.1-fixes`
+- **Branch:** `v3.3`
 - **VPS:** Running V2.3 (deployed, production)
 - **Python:** 3.11+ required (dev environment running 3.13.7)
 
@@ -31,7 +31,7 @@ Forbidden error handling added to scheduled photo delivery.
 - **Ruff linter:** passing (0 errors)
 - **Architecture compliance:** All 5 layers (types, config, repo, service, runtime) have correct downward-only dependency flow
 
-## V3.1 Fixes (Branch: v3.3)
+## V3.3 Fixes (Branch: v3.3)
 
 ### Forbidden Error Handling
 - **`telegram.error.Forbidden` handling** — When `send_photo` raises `Forbidden` (user blocked the bot), all schedules for that user are deactivated and in-memory jobs removed. Prevents wasted API calls on blocked users. Shared helper `deactivate_all_user_schedules()` in `job_utils.py` used by both Forbidden handler and `/stop` command. Fallback: if topic is deleted, deactivates orphaned schedule in DB and removes the triggering job. 6 new unit tests in `test_schedule_handler.py`.

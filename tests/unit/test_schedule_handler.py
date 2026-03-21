@@ -184,7 +184,7 @@ class TestDeactivateAllUserSchedules:
 class TestSendScheduledPhotoForbidden:
     """Tests for Forbidden error handling in _send_scheduled_photo."""
 
-    @patch("src.runtime.handlers.schedule_handler.remove_job")
+    @patch("src.runtime.job_utils.remove_job")
     @patch("src.runtime.handlers.schedule_handler.build_photo_caption", return_value="caption")
     async def test_forbidden_deactivates_all_user_schedules(
         self,
@@ -252,6 +252,30 @@ class TestSendScheduledPhotoForbidden:
 
         # Should NOT try to deactivate schedules
         topic_service.get_topic.assert_not_awaited()
+        topic_service.get_user_topics.assert_not_awaited()
+        schedule_service.remove_schedule.assert_not_awaited()
+        schedule_service.mark_sent.assert_not_awaited()
+
+    @patch("src.runtime.handlers.schedule_handler.remove_job")
+    @patch("src.runtime.handlers.schedule_handler.build_photo_caption", return_value="caption")
+    async def test_forbidden_cleanup_error_is_caught(
+        self,
+        mock_caption,
+        mock_remove_job,
+        context,
+        topic_service,
+        schedule_service,
+        photo_service,
+    ):
+        """If cleanup raises during Forbidden handling, error is logged, not propagated."""
+        context.bot.send_photo.side_effect = Forbidden("Forbidden: bot was blocked by the user")
+        topic_service.get_topic.side_effect = RuntimeError("DB connection lost")
+
+        # Should NOT raise — the inner try/except catches the cleanup error
+        await _send_scheduled_photo(context)
+
+        topic_service.get_topic.assert_awaited_once_with(1)
+        # Cleanup failed, so no further calls should have been made
         topic_service.get_user_topics.assert_not_awaited()
         schedule_service.remove_schedule.assert_not_awaited()
         schedule_service.mark_sent.assert_not_awaited()

@@ -4,7 +4,7 @@ You are operating within a **Harness Engineering** workspace.
 Your primary role is autonomous, high-quality code generation and problem-solving, guided by the project's explicit rules.
 
 Then conduct a full audit of the current codebase:
-1. Assess how well the current folder and import structure matches `docs/architecture.md`. Pay attention to the execution of the `tools/ai-linters/layer-dependency-check.js` script.
+1. Assess how well the current folder and import structure matches `docs/architecture.md`. Pay attention to the execution of the `tools/ai-linters/layer-dependency-check.py` script.
 2. Check the dependency stack against `docs/tech-stack.md`.
 3. Find architectural violations.
 4. Generate a report and record the identified technical debt in `docs/plans/garbage-collection.md` (create the file if it doesn't exist).

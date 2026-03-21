@@ -46,7 +46,7 @@ Get your API keys:
 ## Development
 
 ```bash
-python -m pytest tests/ -v                             # Run all 79 tests
+python -m pytest tests/ -v                             # Run all tests
 python -m pytest tests/ -v --cov=src                   # Run with coverage
 python -m ruff check src/                              # Lint
 python -m ruff check src/ --fix                        # Auto-fix lint issues
@@ -98,7 +98,7 @@ Translation files live in `src/config/translations/` as JSON (one per language: 
 | python-telegram-bot v21+ | Bot framework |
 | SQLite + aiosqlite | Database |
 | httpx | HTTP client for photo APIs |
-| pytest | Testing (79 tests) |
+| pytest | Testing |
 | ruff | Linting |
 
 ## Deployment

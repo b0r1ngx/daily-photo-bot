@@ -2,7 +2,7 @@
 **Last Updated:** 2026-03-21
 
 ## Active Task
-Harness Engineering audit complete. Addressing identified tech debt.
+None. Critical tech debt resolved. Awaiting next task.
 
 ## Current Status
 - **Version:** 0.2.3 (source: `src/config/constants.py:BOT_VERSION`)
@@ -19,13 +19,13 @@ Harness Engineering audit complete. Addressing identified tech debt.
 - **Architecture compliance:** All 5 layers (types, config, repo, service, runtime) have correct downward-only dependency flow
 
 ### Tech Debt Identified
-7 critical items (stale/broken artifacts from Harness Kit template), 2 high priority, 4 medium, 3 low. See `docs/plans/garbage-collection.md` for full list.
+7 critical items resolved (stale template artifacts). 2 high priority, 4 medium, 3 low remain. See `docs/plans/garbage-collection.md`.
 
 ### Key Findings
 1. **Architecture: Clean.** Zero layer violations. Protocol-based DI properly decouples service from repo.
 2. **Tech stack: Aligned.** All deps match `docs/tech-stack.md` approved list.
-3. **Stale template artifacts:** JS linter, Node.js CI workflow, ESLint-referencing docs are dead code from the Harness Kit template.
-4. **Doc drift:** Test counts stale in `testing.md`. `pyproject.toml` version stuck at `0.1.0` (should be `0.2.3`). `state.md` referenced wrong branch and deployment status.
+3. **Stale template artifacts: Resolved.** JS linter, Node.js CI workflow, ESLint-referencing docs cleaned up. AGENTS.md adapted for Python.
+4. **Doc drift: Fixed.** Test counts, version numbers, branch references corrected across all docs.
 
 ## V2.2 Completed (Quick Commands)
 Two new slash commands for instant actions outside the conversation flow:
@@ -55,11 +55,9 @@ All 4 issues from GitHub Copilot's PR #1 review fixed, plus 6 additional review 
 - **Phase 5: Polish & Documentation** — README, architecture docs, testing docs, agent log
 
 ## Known Tech Debt
-See `docs/plans/garbage-collection.md` for the full prioritized list (16 items).
+See `docs/plans/garbage-collection.md` for the full prioritized list (9 remaining items).
 
 ## Next Steps
-- Fix file ownership: `sudo chown -R $(whoami) docs/ tools/ .github/ AGENTS.md opencode-init.md`
-- Apply audit output files from `audit-output/` to `docs/`
-- Address critical tech debt items (dead JS linter, broken CI workflow, version mismatch in `pyproject.toml`)
+- Set up Python CI/CD pipeline (pytest, ruff, layer linter) — see garbage-collection.md item #2
 - Gather user feedback on V2 features
 - Plan V3 based on feedback

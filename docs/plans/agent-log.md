@@ -17,8 +17,8 @@ This file tracks the reasoning and autonomous actions taken by AI Agents in this
 3. [Did you encounter any linter errors? How did you fix them?]
 
 **Files Changed:**
-- `src/path/to/file.ts` (created)
-- `src/path/to/test.spec.ts` (added tests)
+- `src/path/to/file.py` (created)
+- `tests/unit/test_file.py` (added tests)
 ```
 
 ---
@@ -117,3 +117,39 @@ This file tracks the reasoning and autonomous actions taken by AI Agents in this
 - `audit-output/docs/plans/garbage-collection.md` (updated with 16 prioritized tech debt items, 7 new critical items)
 - `audit-output/docs/state.md` (updated with correct version 0.2.3, branch master, production status, audit results)
 - `audit-output/docs/plans/agent-log.md` (added this initialization entry)
+
+---
+
+### 2026-03-21 — Task: Critical Tech Debt Resolution (Garbage Collection)
+**Agent:** OpenCode (Claude Opus 4.6)
+
+**Reasoning:**
+1. Read `docs/plans/garbage-collection.md` and the audit findings from the prior session. Identified 7 critical items — all stale Node.js/TypeScript template artifacts left from the Harness Kit initialization.
+2. Systematically resolved each item, verifying before and after with tests, ruff, and layer linter.
+3. All changes were documentation and config fixes — no source code changes required. The bot's architecture and code were already clean.
+
+**Items Resolved:**
+1. `pyproject.toml` — version `0.1.0` → `0.2.3` (matched `BOT_VERSION` in `src/config/constants.py`)
+2. `opencode-init.md` — fixed linter reference from `.js` to `.py`
+3. `docs/deployment.md` — fixed branch references from `implementing-daily-photo-bot` to `master` (2 occurrences)
+4. `README.md` — removed hardcoded "79 tests" count, replaced with generic wording
+5. `docs/testing.md` — updated test tree (added 2 missing test files) and counts to 108 (34 integration + 74 unit)
+6. `docs/agent-linters.md` — full rewrite: removed ESLint/TypeScript references, documented Python AST linter + ruff
+7. `docs/plans/README.md` — rewritten to list actual directory contents
+8. `AGENTS.md` sections 3, 5, 6 — rewritten for Python (removed UI layer, npm→pytest/ruff, TypeScript→Python conventions)
+9. `.github/workflows/ai-garbage-collect.yml` — deleted (broken Node.js workflow referencing non-existent scripts)
+10. `docs/plans/garbage-collection.md` — moved resolved items to "Resolved" section, renumbered remaining 9 items
+11. `docs/state.md` — updated with audit results, correct status, and next steps
+
+**Files Changed:**
+- `pyproject.toml` (version bump)
+- `opencode-init.md` (linter reference fix)
+- `AGENTS.md` (sections 3, 5, 6 rewritten)
+- `README.md` (test count fix)
+- `docs/state.md` (full status update)
+- `docs/testing.md` (test tree and counts updated)
+- `docs/deployment.md` (branch references fixed)
+- `docs/agent-linters.md` (full rewrite)
+- `docs/plans/README.md` (rewritten)
+- `docs/plans/garbage-collection.md` (resolved items moved)
+- `.github/workflows/ai-garbage-collect.yml` (deleted)

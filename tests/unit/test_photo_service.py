@@ -162,6 +162,92 @@ async def test_get_photo_skips_already_sent(service: PhotoService, sent_repo):
 
 
 @pytest.mark.asyncio
+async def test_api_request_recorded_on_pexels_call(sent_repo):
+    """Verify record_api_request('pexels') is called after Pexels API call."""
+    recorder = AsyncMock()
+    svc = PhotoService(sent_photo_repo=sent_repo, api_request_recorder=recorder)
+    mock_resp = _make_pexels_response()
+
+    with patch("src.service.photo_service.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.get.return_value = mock_resp
+        mock_client_cls.return_value = mock_client
+
+        await svc.get_photo("parrots", topic_id=1)
+
+    recorder.record_api_request.assert_any_await("pexels")
+
+
+@pytest.mark.asyncio
+async def test_api_request_recorded_on_unsplash_fallback(sent_repo):
+    """Verify both pexels and unsplash requests are recorded on fallback."""
+    recorder = AsyncMock()
+    svc = PhotoService(sent_photo_repo=sent_repo, api_request_recorder=recorder)
+
+    pexels_resp = _make_pexels_rate_limit_response()
+    unsplash_resp = MagicMock()
+    unsplash_resp.status_code = 200
+    unsplash_resp.json.return_value = [
+        {
+            "id": "abc",
+            "urls": {"regular": "https://images.unsplash.com/abc.jpg"},
+            "user": {"name": "Unsplash Photographer"},
+            "links": {
+                "html": "https://unsplash.com/photos/abc",
+                "download_location": "https://api.unsplash.com/photos/abc/download",
+            },
+            "alt_description": "A parrot",
+        }
+    ]
+    download_resp = MagicMock()
+    download_resp.status_code = 200
+
+    async def mock_get(*args, **kwargs):
+        url = args[0] if args else kwargs.get("url", "")
+        if "pexels" in str(url):
+            return pexels_resp
+        if "unsplash.com/photos/random" in str(url):
+            return unsplash_resp
+        return download_resp
+
+    with (
+        patch("src.service.photo_service.httpx.AsyncClient") as mock_client_cls,
+        patch("src.service.photo_service.UNSPLASH_ACCESS_KEY", "test-unsplash-key"),
+    ):
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.get = mock_get
+        mock_client_cls.return_value = mock_client
+
+        await svc.get_photo("parrots", topic_id=1)
+
+    recorder.record_api_request.assert_any_await("pexels")
+    recorder.record_api_request.assert_any_await("unsplash")
+
+
+@pytest.mark.asyncio
+async def test_no_recorder_does_not_crash(sent_repo):
+    """Verify PhotoService works fine when api_request_recorder is None."""
+    svc = PhotoService(sent_photo_repo=sent_repo, api_request_recorder=None)
+    mock_resp = _make_pexels_response()
+
+    with patch("src.service.photo_service.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.get.return_value = mock_resp
+        mock_client_cls.return_value = mock_client
+
+        result = await svc.get_photo("parrots", topic_id=1)
+
+    assert isinstance(result, PhotoResult)
+    assert result.source == "pexels"
+
+
+@pytest.mark.asyncio
 async def test_exhaustion_reset(service: PhotoService, sent_repo):
     sent_repo.count_by_topic.return_value = 501  # > threshold
     sent_repo.get_sent_ids.return_value = set()

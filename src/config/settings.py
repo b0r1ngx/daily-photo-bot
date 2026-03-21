@@ -39,3 +39,8 @@ DATABASE_PATH: str = os.getenv("DATABASE_PATH", "data/bot.db")
 STAR_PRICE: int = int(os.getenv("STAR_PRICE", "1"))
 FREE_TOPICS_LIMIT: int = int(os.getenv("FREE_TOPICS_LIMIT", "1"))
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+
+# Analytics: private Telegram group where daily stats are sent (optional).
+# The bot must be an admin in this group. Set to the group's chat ID (negative integer).
+_analytics_raw = os.getenv("ANALYTICS_GROUP_ID", "")
+ANALYTICS_GROUP_ID: int | None = int(_analytics_raw) if _analytics_raw else None

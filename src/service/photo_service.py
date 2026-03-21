@@ -23,7 +23,7 @@ from src.config.constants import (
 from src.config.settings import PEXELS_API_KEY, UNSPLASH_ACCESS_KEY
 from src.types.exceptions import PhotoNotFoundError, PhotoSourceError, RateLimitError
 from src.types.photo import PhotoResult
-from src.types.protocols import SentPhotoRepository
+from src.types.protocols import ApiRequestRecorder, SentPhotoRepository
 
 logger = logging.getLogger(__name__)
 
@@ -83,8 +83,13 @@ def _enrich_query(topic: str, language_code: str | None) -> str:
 class PhotoService:
     """Fetches unique photos from external APIs."""
 
-    def __init__(self, sent_photo_repo: SentPhotoRepository) -> None:
+    def __init__(
+        self,
+        sent_photo_repo: SentPhotoRepository,
+        api_request_recorder: ApiRequestRecorder | None = None,
+    ) -> None:
         self._sent_repo = sent_photo_repo
+        self._recorder = api_request_recorder
 
     async def get_photo(
         self, topic: str, topic_id: int, language_code: str | None = None,
@@ -155,6 +160,9 @@ class PhotoService:
                 },
             )
 
+        if self._recorder:
+            await self._recorder.record_api_request("pexels")
+
         if response.status_code == 429:
             retry_after = int(response.headers.get("Retry-After", "60"))
             raise RateLimitError("pexels", retry_after)
@@ -185,6 +193,8 @@ class PhotoService:
                         "orientation": "landscape",
                     },
                 )
+            if self._recorder:
+                await self._recorder.record_api_request("pexels")
             if response.status_code == 200:
                 photos = response.json().get("photos", [])
                 unsent = [p for p in photos if str(p["id"]) not in sent_ids]
@@ -216,6 +226,9 @@ class PhotoService:
                     "orientation": "landscape",
                 },
             )
+
+        if self._recorder:
+            await self._recorder.record_api_request("unsplash")
 
         if response.status_code == 429:
             raise RateLimitError("unsplash")

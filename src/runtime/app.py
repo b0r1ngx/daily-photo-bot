@@ -56,6 +56,7 @@ from src.runtime.handlers.topic_manage_handler import (
     my_topics_menu,
     receive_new_topic_name,
     rename_topic_callback,
+    schedule_from_topics_callback,
 )
 
 
@@ -105,6 +106,9 @@ def build_application() -> Application:  # type: ignore[type-arg]
                 CallbackQueryHandler(select_minute_callback, pattern=r"^minute_\d+$"),
             ],
             STATE_TOPIC_MANAGE: [
+                CallbackQueryHandler(
+                    schedule_from_topics_callback, pattern=r"^schedule_\d+$",
+                ),
                 CallbackQueryHandler(delete_topic_callback, pattern=r"^delete_\d+$"),
                 CallbackQueryHandler(rename_topic_callback, pattern=r"^rename_\d+$"),
             ],

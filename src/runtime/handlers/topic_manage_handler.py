@@ -8,10 +8,15 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
-from src.config.constants import STATE_EDIT_TOPIC_NAME, STATE_MAIN_MENU, STATE_TOPIC_MANAGE
+from src.config.constants import (
+    STATE_EDIT_TOPIC_NAME,
+    STATE_MAIN_MENU,
+    STATE_SCHEDULE_TYPE,
+    STATE_TOPIC_MANAGE,
+)
 from src.config.i18n import t
 from src.runtime.job_utils import remove_job
-from src.runtime.keyboards import main_menu_keyboard, topic_manage_keyboard
+from src.runtime.keyboards import main_menu_keyboard, schedule_type_keyboard, topic_manage_keyboard
 from src.service.schedule_service import ScheduleService
 from src.service.topic_service import TopicService
 
@@ -54,6 +59,44 @@ async def my_topics_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
 
     return STATE_TOPIC_MANAGE
+
+
+async def schedule_from_topics_callback(
+    update: Update, context: ContextTypes.DEFAULT_TYPE,
+) -> int:
+    """Handle 'Schedule' button press from the topic manage view."""
+    query = update.callback_query
+    if not query or not query.data:
+        return STATE_TOPIC_MANAGE
+    await query.answer()
+
+    lang = _lang(update)
+
+    try:
+        topic_id = int(query.data.split("_", 1)[1])
+    except (IndexError, ValueError):
+        await query.edit_message_text(t("invalid_selection", lang))
+        return STATE_TOPIC_MANAGE
+
+    topic_service: TopicService = context.bot_data["topic_service"]
+    user = await topic_service.ensure_user(
+        telegram_id=query.from_user.id,
+        username=query.from_user.username or "",
+        first_name=query.from_user.first_name or "",
+        language_code=query.from_user.language_code,
+    )
+    topic = await topic_service.get_topic(topic_id)
+    if not topic or not user.id or topic.user_id != user.id:
+        await query.edit_message_text(t("topic_not_found", lang))
+        return STATE_TOPIC_MANAGE
+
+    context.user_data["schedule_topic_id"] = topic_id
+
+    await query.edit_message_text(
+        t("schedule_type_prompt", lang),
+        reply_markup=schedule_type_keyboard(lang),
+    )
+    return STATE_SCHEDULE_TYPE
 
 
 async def delete_topic_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:

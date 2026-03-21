@@ -45,6 +45,7 @@
     "btn_remove_schedule": "🗑 Remover horário",
     "btn_rename": "✏️ Renomear",
     "btn_delete": "🗑 Excluir",
+    "btn_schedule": "⏰ Horário",
     "interval_minutes": "{count} minutos",
     "interval_hours": "{count} horas",
     "photo_no_topics": "Você ainda não tem nenhum tema. Use /start para adicionar!",

@@ -45,6 +45,7 @@
     "btn_remove_schedule": "🗑 Удалить расписание",
     "btn_rename": "✏️ Переименовать",
     "btn_delete": "🗑 Удалить",
+    "btn_schedule": "⏰ Расписание",
     "interval_minutes": "{count} минут",
     "interval_hours": "{count} часов",
     "photo_no_topics": "У вас ещё нет тем. Используйте /start, чтобы добавить!",

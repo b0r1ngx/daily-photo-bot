@@ -33,16 +33,19 @@ def topic_list_keyboard(topics: list[Topic]) -> InlineKeyboardMarkup:
 
 
 def topic_manage_keyboard(topic: Topic, language_code: str | None = None) -> InlineKeyboardMarkup:
-    """Build inline keyboard with rename/delete actions for a topic."""
+    """Build inline keyboard with schedule/rename/delete actions for a topic."""
     if topic.id is None:
         raise ValueError(f'Cannot build manage keyboard for topic without id: {topic.name}')
+    schedule_btn = InlineKeyboardButton(
+        t('btn_schedule', language_code), callback_data=f"schedule_{topic.id}",
+    )
     rename_btn = InlineKeyboardButton(
         t('btn_rename', language_code), callback_data=f"rename_{topic.id}",
     )
     delete_btn = InlineKeyboardButton(
         t('btn_delete', language_code), callback_data=f"delete_{topic.id}",
     )
-    return InlineKeyboardMarkup([[rename_btn, delete_btn]])
+    return InlineKeyboardMarkup([[schedule_btn], [rename_btn, delete_btn]])
 
 
 def schedule_type_keyboard(language_code: str | None = None) -> InlineKeyboardMarkup:

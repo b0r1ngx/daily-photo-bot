@@ -45,6 +45,7 @@
     "btn_remove_schedule": "🗑 Remove schedule",
     "btn_rename": "✏️ Rename",
     "btn_delete": "🗑 Delete",
+    "btn_schedule": "⏰ Schedule",
     "interval_minutes": "{count} minutes",
     "interval_hours": "{count} hours",
     "photo_no_topics": "You don't have any topics yet. Use /start to add one!",

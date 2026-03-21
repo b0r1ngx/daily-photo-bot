@@ -1,6 +1,6 @@
 """Application constants. Layer: Config (depends on: types only)."""
 
-BOT_VERSION: str = '0.2.3'
+BOT_VERSION: str = '3.1.0'
 
 # Schedule interval options (label, seconds)
 SCHEDULE_INTERVALS: list[tuple[str, int]] = [

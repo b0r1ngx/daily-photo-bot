@@ -193,6 +193,27 @@ async def test_get_paid_user_count_with_paid_topics(
 
 
 @pytest.mark.asyncio
+async def test_get_paid_user_count_excludes_inactive_topics(
+    repo: AnalyticsRepo, db: aiosqlite.Connection,
+):
+    """Soft-deleted paid topics should not be counted."""
+    user_id = await _insert_user(db, 100)
+    await _insert_topic(db, user_id, is_free=False, is_active=False)
+    assert await repo.get_paid_user_count() == 0
+
+
+@pytest.mark.asyncio
+async def test_get_paid_user_count_mixed_active_inactive(
+    repo: AnalyticsRepo, db: aiosqlite.Connection,
+):
+    """User with one active and one inactive paid topic is counted once."""
+    user_id = await _insert_user(db, 100)
+    await _insert_topic(db, user_id, name="active_paid", is_free=False, is_active=True)
+    await _insert_topic(db, user_id, name="deleted_paid", is_free=False, is_active=False)
+    assert await repo.get_paid_user_count() == 1
+
+
+@pytest.mark.asyncio
 async def test_get_photos_sent_since(repo: AnalyticsRepo, db: aiosqlite.Connection):
     user_id = await _insert_user(db, 100)
     topic_id = await _insert_topic(db, user_id)

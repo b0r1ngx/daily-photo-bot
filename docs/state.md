@@ -3,11 +3,11 @@
 
 ## Active Task
 All 7 tasks from `docs/plans/todo-list.md` are complete.
-Copilot review fixes for PR #4 are complete.
+Copilot review fixes (rounds 1 and 2) for PR #4 are complete.
 
 ## Current Status
-- **Version:** 0.2.3 (source: `src/config/constants.py:BOT_VERSION`)
-- **Branch:** `master`
+- **Version:** 3.1.0 (source: `src/config/constants.py:BOT_VERSION`)
+- **Branch:** `v3`
 - **VPS:** Running V2.3 (deployed, production)
 - **Python:** 3.11+ required (dev environment running 3.13.7)
 
@@ -29,8 +29,16 @@ Copilot review fixes for PR #4 are complete.
 - **Architecture compliance:** All 5 layers (types, config, repo, service, runtime) have correct downward-only dependency flow
 
 ## V2.4 Copilot Review Fixes (PR #4)
+
+### Round 1
 1. **Rename `since_iso` → `since_dt_text`** — Parameter names and docstrings in `AnalyticsRepository` protocol and `AnalyticsRepo` implementation renamed to accurately reflect SQLite datetime text format (`YYYY-MM-DD HH:MM:SS`), not ISO-8601. Also renamed `older_than_iso` → `older_than_dt_text`.
 2. **Add `rowcount` check in `topic_repo.update_metadata_prefs`** — Silent failure on nonexistent/inactive topic now raises `ValueError`, matching the `update_name` pattern. Added `logger.info` call on success. 2 new integration tests added.
+
+### Round 2
+3. **Guard recorder calls in `photo_service.py`** — Wrapped 3 `record_api_request()` call sites in try/except so analytics recording failures don't break photo delivery. 2 new unit tests.
+4. **Catch `JSONDecodeError` in `topic_repo.get_metadata_prefs`** — Corrupted JSON in `metadata_prefs` column now falls back to defaults with a warning log instead of crashing. 1 new integration test.
+5. **Add explicit `tzinfo=UTC` to `run_daily` time** — Fixed 3 naive `datetime.time()` calls in `main.py` (2) and `schedule_handler.py` (1) to explicitly use UTC timezone.
+6. **Filter `is_active=1` in `get_paid_user_count`** — Soft-deleted paid topics no longer inflate the paid user count in analytics. 2 new integration tests.
 
 ## Key Architecture Additions (V2.4)
 - **New conversation state:** `STATE_METADATA_SETTINGS = 10` — metadata toggle UI

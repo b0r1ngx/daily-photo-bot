@@ -40,9 +40,9 @@ class AnalyticsRepo:
         return row[0] if row else 0
 
     async def get_paid_user_count(self) -> int:
-        """Count users who have at least one paid topic (is_free = 0)."""
+        """Count users who have at least one active paid topic (is_free = 0)."""
         cursor = await self._db.execute(
-            "SELECT COUNT(DISTINCT user_id) FROM topics WHERE is_free = 0"
+            "SELECT COUNT(DISTINCT user_id) FROM topics WHERE is_free = 0 AND is_active = 1"
         )
         row = await cursor.fetchone()
         return row[0] if row else 0

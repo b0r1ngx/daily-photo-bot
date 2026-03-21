@@ -9,7 +9,7 @@ Copilot review fixes for PRs #5 and #6 are complete.
 Forbidden error handling added to scheduled photo delivery.
 
 ## Current Status
-- **Version:** 3.1.0 (source: `src/config/constants.py:BOT_VERSION`)
+- **Version:** 3.3.0 (source: `src/config/constants.py:BOT_VERSION`)
 - **Branch:** `v3.1-fixes`
 - **VPS:** Running V2.3 (deployed, production)
 - **Python:** 3.11+ required (dev environment running 3.13.7)

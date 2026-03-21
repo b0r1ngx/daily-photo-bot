@@ -4,6 +4,7 @@
 ## Active Task
 All 7 tasks from `docs/plans/todo-list.md` are complete.
 Copilot review fixes (rounds 1 and 2) for PR #4 are complete.
+`/analytics` on-demand command added for the admin group.
 
 ## Current Status
 - **Version:** 3.1.0 (source: `src/config/constants.py:BOT_VERSION`)
@@ -23,12 +24,15 @@ Copilot review fixes (rounds 1 and 2) for PR #4 are complete.
 7. **Task 2 (Photo Metadata)** — Per-topic metadata display preferences (description, location, camera). `MetadataPrefs` dataclass, `build_photo_caption()` shared caption builder, metadata extraction from Unsplash API (description/alt, location.name, exif.name). Settings UI with toggle keyboard (✅/❌). Migration v3. 22 new tests. 6 new i18n keys across 12 languages.
 
 ## Verification Status
-- **175/175 tests passing** (51 integration + 124 unit)
+- **185/185 tests passing** (55 integration + 130 unit)
 - **Layer dependency linter:** passing (0 violations)
 - **Ruff linter:** passing (0 errors)
 - **Architecture compliance:** All 5 layers (types, config, repo, service, runtime) have correct downward-only dependency flow
 
 ## V2.4 Copilot Review Fixes (PR #4)
+
+### On-Demand Analytics Command
+- **`/analytics` command** — Sends the same daily analytics report on demand when invoked in the analytics admin group. Restricted to `ANALYTICS_GROUP_ID` only (silently ignored elsewhere). Registered as standalone `CommandHandler` outside the `ConversationHandler`. 5 new unit tests.
 
 ### Round 1
 1. **Rename `since_iso` → `since_dt_text`** — Parameter names and docstrings in `AnalyticsRepository` protocol and `AnalyticsRepo` implementation renamed to accurately reflect SQLite datetime text format (`YYYY-MM-DD HH:MM:SS`), not ISO-8601. Also renamed `older_than_iso` → `older_than_dt_text`.

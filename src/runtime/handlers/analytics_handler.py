@@ -1,11 +1,13 @@
 """Analytics handler. Layer: Runtime.
 
 Sends a daily analytics report to the configured admin group.
+Provides an on-demand /analytics command restricted to the admin group.
 """
 from __future__ import annotations
 
 import logging
 
+from telegram import Update
 from telegram.ext import ContextTypes
 
 from src.service.analytics_service import AnalyticsService
@@ -37,3 +39,30 @@ async def send_daily_analytics(context: ContextTypes.DEFAULT_TYPE) -> None:
         logger.info("Daily analytics report sent to group %d.", ANALYTICS_GROUP_ID)
     except Exception:
         logger.exception("Failed to send daily analytics report.")
+
+
+async def analytics_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /analytics — on-demand report, restricted to the admin group.
+
+    Silently ignores invocations outside the analytics group.
+    If anything fails, it logs the error but never crashes the bot.
+    """
+    if not update.message:
+        return
+
+    from src.config.settings import ANALYTICS_GROUP_ID
+
+    if ANALYTICS_GROUP_ID is None:
+        return
+
+    if update.effective_chat is None or update.effective_chat.id != ANALYTICS_GROUP_ID:
+        return
+
+    try:
+        analytics_service: AnalyticsService = context.bot_data["analytics_service"]
+        snapshot = await analytics_service.collect_snapshot()
+        message = analytics_service.format_message(snapshot)
+
+        await update.message.reply_text(message, parse_mode="HTML")
+    except Exception:
+        logger.exception("Failed to handle /analytics command.")

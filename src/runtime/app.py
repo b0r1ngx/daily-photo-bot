@@ -31,6 +31,7 @@ from src.config.constants import (
     STATE_TOPIC_MANAGE,
 )
 from src.config.settings import TELEGRAM_BOT_TOKEN
+from src.runtime.handlers.analytics_handler import analytics_command
 from src.runtime.handlers.help_handler import (
     cancel_command,
     help_command,
@@ -143,6 +144,9 @@ def build_application() -> Application:  # type: ignore[type-arg]
 
     # Help command (outside conversation)
     app.add_handler(CommandHandler("help", help_command))
+
+    # Analytics command (outside conversation, restricted to admin group)
+    app.add_handler(CommandHandler("analytics", analytics_command))
 
     # Payment handlers (must be outside conversation handler)
     app.add_handler(PreCheckoutQueryHandler(pre_checkout_callback))

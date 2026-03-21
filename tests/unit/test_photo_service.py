@@ -319,6 +319,7 @@ async def test_recorder_failure_does_not_break_unsplash_fallback(sent_repo):
 
     assert isinstance(result, PhotoResult)
     assert result.source == "unsplash"
+    recorder.record_api_request.assert_awaited()
 
 
 @pytest.mark.asyncio

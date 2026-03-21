@@ -51,5 +51,11 @@
     "photo_no_topics": "你还没有任何主题。使用 /start 添加一个！",
     "photo_error": "抱歉，暂时无法获取照片。请稍后再试。",
     "stop_success": "✅ 已停止 {count} 个计划。在您设置新计划之前，不会收到自动照片。",
-    "stop_no_schedules": "您没有可以停止的活动计划。"
+    "stop_no_schedules": "您没有可以停止的活动计划。",
+    "btn_settings": "⚙️ 设置",
+    "metadata_settings_title": "⚙️ *照片详情* *{name}*",
+    "metadata_description": "描述",
+    "metadata_location": "位置",
+    "metadata_camera": "相机",
+    "metadata_not_specified": "作者未注明"
 }

@@ -9,6 +9,9 @@ from src.service.photo_service import PhotoService
 from src.types.exceptions import PhotoNotFoundError
 from src.types.photo import PhotoResult
 
+# Import extraction helpers for direct unit testing
+from src.service.photo_service import _extract_camera, _extract_description, _extract_location
+
 
 @pytest.fixture
 def sent_repo():
@@ -263,3 +266,66 @@ async def test_exhaustion_reset(service: PhotoService, sent_repo):
         await service.get_photo("parrots", topic_id=1)
 
     sent_repo.reset_by_topic.assert_awaited_once_with(1)
+
+
+# --- Metadata extraction tests ---
+
+
+def test_extract_description_full():
+    """Extract description from Unsplash photo with both description and alt."""
+    photo = {"description": "A beautiful sunset", "alt_description": "sunset colors"}
+    assert _extract_description(photo) == "A beautiful sunset"
+
+
+def test_extract_description_fallback_to_alt():
+    """Falls back to alt_description when description is empty."""
+    photo = {"description": "", "alt_description": "sunset colors"}
+    assert _extract_description(photo) == "sunset colors"
+
+
+def test_extract_description_missing():
+    """Returns empty string when both fields are missing."""
+    assert _extract_description({}) == ""
+
+
+def test_extract_location_from_name():
+    """Extract location from the 'name' field."""
+    photo = {"location": {"name": "Montreal, Canada", "city": "Montreal", "country": "Canada"}}
+    assert _extract_location(photo) == "Montreal, Canada"
+
+
+def test_extract_location_fallback_city_country():
+    """Falls back to city+country when name is missing."""
+    photo = {"location": {"name": None, "city": "Tokyo", "country": "Japan"}}
+    assert _extract_location(photo) == "Tokyo, Japan"
+
+
+def test_extract_location_missing():
+    """Returns empty string when location is not present."""
+    assert _extract_location({}) == ""
+
+
+def test_extract_camera_from_name():
+    """Extract camera from exif 'name' field."""
+    photo = {"exif": {"name": "Canon, EOS 40D", "make": "Canon", "model": "EOS 40D"}}
+    assert _extract_camera(photo) == "Canon, EOS 40D"
+
+
+def test_extract_camera_fallback_make_model():
+    """Falls back to make+model when name is missing."""
+    photo = {"exif": {"name": None, "make": "Nikon", "model": "D750"}}
+    assert _extract_camera(photo) == "Nikon, D750"
+
+
+def test_extract_camera_missing():
+    """Returns empty string when exif is not present."""
+    assert _extract_camera({}) == ""
+
+
+def test_extract_description_truncation():
+    """Long descriptions are truncated to 100 chars."""
+    long_desc = "A" * 150
+    photo = {"description": long_desc}
+    result = _extract_description(photo)
+    assert len(result) == 100
+    assert result.endswith("...")

@@ -24,6 +24,7 @@ _MIGRATIONS: list[tuple[int, str]] = [
         "CREATE INDEX IF NOT EXISTS idx_api_requests_source_date "
         "ON api_requests(source, requested_at);",
     ),
+    (3, "ALTER TABLE topics ADD COLUMN metadata_prefs TEXT DEFAULT NULL"),
 ]
 
 _DDL = """
@@ -42,6 +43,7 @@ CREATE TABLE IF NOT EXISTS topics (
     name TEXT NOT NULL,
     is_free INTEGER DEFAULT 1,
     is_active INTEGER DEFAULT 1,
+    metadata_prefs TEXT DEFAULT NULL,
     created_at TEXT DEFAULT (datetime('now'))
 );
 

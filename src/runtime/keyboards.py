@@ -12,7 +12,7 @@ from src.config.constants import (
     SCHEDULE_MINUTES,
 )
 from src.config.i18n import t
-from src.types.user import Topic
+from src.types.user import MetadataPrefs, Topic
 
 
 def main_menu_keyboard() -> ReplyKeyboardMarkup:
@@ -39,13 +39,16 @@ def topic_manage_keyboard(topic: Topic, language_code: str | None = None) -> Inl
     schedule_btn = InlineKeyboardButton(
         t('btn_schedule', language_code), callback_data=f"schedule_{topic.id}",
     )
+    settings_btn = InlineKeyboardButton(
+        t('btn_settings', language_code), callback_data=f"settings_{topic.id}",
+    )
     rename_btn = InlineKeyboardButton(
         t('btn_rename', language_code), callback_data=f"rename_{topic.id}",
     )
     delete_btn = InlineKeyboardButton(
         t('btn_delete', language_code), callback_data=f"delete_{topic.id}",
     )
-    return InlineKeyboardMarkup([[schedule_btn], [rename_btn, delete_btn]])
+    return InlineKeyboardMarkup([[schedule_btn], [settings_btn], [rename_btn, delete_btn]])
 
 
 def schedule_type_keyboard(language_code: str | None = None) -> InlineKeyboardMarkup:
@@ -97,3 +100,33 @@ def minute_keyboard() -> InlineKeyboardMarkup:
         for m in SCHEDULE_MINUTES
     ]
     return InlineKeyboardMarkup([buttons])
+
+
+def metadata_settings_keyboard(
+    topic_id: int,
+    prefs: MetadataPrefs,
+    language_code: str | None = None,
+) -> InlineKeyboardMarkup:
+    """Build inline keyboard for toggling metadata display preferences."""
+    fields = [
+        ("description", prefs.show_description, "metadata_description"),
+        ("location", prefs.show_location, "metadata_location"),
+        ("camera", prefs.show_camera, "metadata_camera"),
+    ]
+    buttons: list[list[InlineKeyboardButton]] = []
+    for field, enabled, label_key in fields:
+        icon = "\u2705" if enabled else "\u274c"
+        label = t(label_key, language_code)
+        buttons.append([
+            InlineKeyboardButton(
+                f"{icon} {label}",
+                callback_data=f"metatoggle_{field}_{topic_id}",
+            ),
+        ])
+    buttons.append([
+        InlineKeyboardButton(
+            t('kb_back', language_code),
+            callback_data=f"metaback_{topic_id}",
+        ),
+    ])
+    return InlineKeyboardMarkup(buttons)

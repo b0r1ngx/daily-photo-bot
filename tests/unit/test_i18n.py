@@ -166,6 +166,12 @@ def test_all_message_keys_present(lang: str):
         "photo_caption",
         "payment_failed",
         "payment_success",
+        "btn_settings",
+        "metadata_settings_title",
+        "metadata_description",
+        "metadata_location",
+        "metadata_camera",
+        "metadata_not_specified",
     ]
     for key in keys:
         result = t(key, lang)  # type: ignore[arg-type]

@@ -76,4 +76,10 @@ MessageKey = Literal[
     "photo_error",
     "stop_success",
     "stop_no_schedules",
+    "btn_settings",
+    "metadata_settings_title",
+    "metadata_description",
+    "metadata_location",
+    "metadata_camera",
+    "metadata_not_specified",
 ]

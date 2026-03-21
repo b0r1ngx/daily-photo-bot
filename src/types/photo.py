@@ -14,3 +14,6 @@ class PhotoResult:
     source_url: str
     source: str  # "pexels" or "unsplash"
     alt: str = ""
+    description: str = ""  # Photographer's description (Unsplash only)
+    location: str = ""  # Location string (Unsplash only)
+    camera: str = ""  # Camera make/model (Unsplash only)

@@ -7,10 +7,10 @@ import random
 
 from telegram import Update
 from telegram.ext import ContextTypes
-from telegram.helpers import escape_markdown
 
 from src.config.constants import STATE_MAIN_MENU
 from src.config.i18n import t
+from src.runtime.caption import build_photo_caption
 from src.runtime.job_utils import remove_job
 from src.runtime.keyboards import main_menu_keyboard
 from src.service.photo_service import PhotoService
@@ -76,18 +76,9 @@ async def photo_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         )
         return None
 
-    photographer = escape_markdown(photo.photographer, version=2)
-    source_display = escape_markdown(photo.source.title(), version=2)
-    url_safe = photo.source_url.replace("\\", "\\\\").replace(")", "\\)")
-    source_with_link = f"[{source_display}]({url_safe})"
+    prefs = await topic_service.get_metadata_prefs(topic.id)
 
-    caption = t(
-        "photo_caption",
-        language_code,
-        name=escape_markdown(topic_name, version=2),
-        photographer=photographer,
-        source=source_with_link,
-    )
+    caption = build_photo_caption(photo, topic_name, language_code, prefs)
 
     try:
         await update.message.reply_photo(

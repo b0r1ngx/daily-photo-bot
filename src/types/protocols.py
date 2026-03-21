@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Protocol
 
 from src.types.schedule import ScheduleConfig
-from src.types.user import Topic, User
+from src.types.user import MetadataPrefs, Topic, User
 
 
 class UserRepository(Protocol):
@@ -54,6 +54,12 @@ class TopicRepository(Protocol):
         ...
 
     async def get_owner_telegram_id(self, topic_id: int) -> int | None:
+        ...
+
+    async def get_metadata_prefs(self, topic_id: int) -> MetadataPrefs:
+        ...
+
+    async def update_metadata_prefs(self, topic_id: int, prefs: MetadataPrefs) -> None:
         ...
 
 

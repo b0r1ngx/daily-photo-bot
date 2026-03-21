@@ -19,7 +19,7 @@ from src.config.constants import (
 )
 from src.config.i18n import t
 from src.runtime.caption import build_photo_caption
-from src.runtime.job_utils import remove_job
+from src.runtime.job_utils import deactivate_all_user_schedules, remove_job
 from src.runtime.keyboards import (
     hour_keyboard,
     interval_keyboard,
@@ -254,34 +254,6 @@ def _register_daily_job(
     )
 
 
-async def _deactivate_all_user_schedules(
-    user_id: int,
-    topic_service: TopicService,
-    schedule_service: ScheduleService,
-    context: ContextTypes.DEFAULT_TYPE,
-) -> int:
-    """Deactivate all schedules for a user and remove in-memory jobs.
-
-    Used when a user blocks the bot (Forbidden error) to stop wasting API calls.
-    Returns the number of schedules deactivated.
-    """
-    topics = await topic_service.get_user_topics(user_id)
-    deactivated = 0
-    for topic in topics:
-        try:
-            schedule = await schedule_service.get_schedule(topic.id)
-            if schedule and schedule.is_active:
-                await schedule_service.remove_schedule(topic.id)
-                remove_job(f"photo_{topic.id}", context)
-                deactivated += 1
-        except Exception:
-            logger.exception(
-                "Failed to deactivate schedule for topic %d during user cleanup",
-                topic.id,
-            )
-    return deactivated
-
-
 async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Job callback: fetch and send a photo for a scheduled topic."""
     from src.service.photo_service import PhotoService
@@ -326,7 +298,7 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
     except Forbidden:
         topic = await topic_service.get_topic(topic_id)
         if topic:
-            count = await _deactivate_all_user_schedules(
+            count = await deactivate_all_user_schedules(
                 topic.user_id, topic_service, schedule_service, context,
             )
             logger.warning(

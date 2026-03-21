@@ -11,10 +11,9 @@ from telegram.ext import ContextTypes
 from src.config.constants import STATE_MAIN_MENU
 from src.config.i18n import t
 from src.runtime.caption import build_photo_caption
-from src.runtime.job_utils import remove_job
+from src.runtime.job_utils import deactivate_all_user_schedules
 from src.runtime.keyboards import main_menu_keyboard
 from src.service.photo_service import PhotoService
-from src.service.schedule_service import ScheduleService
 from src.service.topic_service import TopicService
 
 logger = logging.getLogger(__name__)
@@ -109,23 +108,10 @@ async def stop_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         return STATE_MAIN_MENU
 
     topic_service: TopicService = context.bot_data["topic_service"]
-    schedule_service: ScheduleService = context.bot_data["schedule_service"]
 
-    topics = await topic_service.get_user_topics(user_id)
-    stopped_count = 0
-
-    for topic in topics:
-        try:
-            schedule = await schedule_service.get_schedule(topic.id)
-            if schedule and schedule.is_active:
-                await schedule_service.remove_schedule(topic.id)
-                remove_job(f"photo_{topic.id}", context)
-                stopped_count += 1
-        except Exception:
-            logger.exception(
-                "Failed to remove schedule for topic %d",
-                topic.id,
-            )
+    stopped_count = await deactivate_all_user_schedules(
+        user_id, topic_service, context.bot_data["schedule_service"], context,
+    )
 
     if stopped_count == 0:
         await update.message.reply_text(

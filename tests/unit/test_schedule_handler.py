@@ -8,9 +8,9 @@ import pytest
 from telegram.error import Forbidden
 
 from src.runtime.handlers.schedule_handler import (
-    _deactivate_all_user_schedules,
     _send_scheduled_photo,
 )
+from src.runtime.job_utils import deactivate_all_user_schedules
 from src.types.photo import PhotoResult
 from src.types.schedule import ScheduleConfig, ScheduleType
 from src.types.user import MetadataPrefs, Topic
@@ -100,9 +100,9 @@ def context(topic_service, photo_service, schedule_service) -> MagicMock:
 
 
 class TestDeactivateAllUserSchedules:
-    """Tests for the _deactivate_all_user_schedules helper."""
+    """Tests for the deactivate_all_user_schedules helper."""
 
-    @patch("src.runtime.handlers.schedule_handler.remove_job")
+    @patch("src.runtime.job_utils.remove_job")
     async def test_deactivates_all_active_schedules(
         self,
         mock_remove_job,
@@ -111,7 +111,7 @@ class TestDeactivateAllUserSchedules:
         schedule_service,
     ):
         """All active schedules for user are deactivated and jobs removed."""
-        count = await _deactivate_all_user_schedules(
+        count = await deactivate_all_user_schedules(
             42, topic_service, schedule_service, context,
         )
 
@@ -124,7 +124,7 @@ class TestDeactivateAllUserSchedules:
         mock_remove_job.assert_any_call("photo_1", context)
         mock_remove_job.assert_any_call("photo_2", context)
 
-    @patch("src.runtime.handlers.schedule_handler.remove_job")
+    @patch("src.runtime.job_utils.remove_job")
     async def test_skips_inactive_schedules(
         self,
         mock_remove_job,
@@ -142,7 +142,7 @@ class TestDeactivateAllUserSchedules:
         )
         schedule_service.get_schedule = AsyncMock(side_effect=[inactive, ACTIVE_SCHEDULE_B])
 
-        count = await _deactivate_all_user_schedules(
+        count = await deactivate_all_user_schedules(
             42, topic_service, schedule_service, context,
         )
 
@@ -150,7 +150,7 @@ class TestDeactivateAllUserSchedules:
         schedule_service.remove_schedule.assert_awaited_once_with(2)
         mock_remove_job.assert_called_once_with("photo_2", context)
 
-    @patch("src.runtime.handlers.schedule_handler.remove_job")
+    @patch("src.runtime.job_utils.remove_job")
     async def test_partial_failure_continues(
         self,
         mock_remove_job,
@@ -166,7 +166,7 @@ class TestDeactivateAllUserSchedules:
             side_effect=[Exception("DB error"), None],
         )
 
-        count = await _deactivate_all_user_schedules(
+        count = await deactivate_all_user_schedules(
             42, topic_service, schedule_service, context,
         )
 

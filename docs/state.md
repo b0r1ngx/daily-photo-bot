@@ -31,10 +31,14 @@ Forbidden error handling added to scheduled photo delivery.
 - **Ruff linter:** passing (0 errors)
 - **Architecture compliance:** All 5 layers (types, config, repo, service, runtime) have correct downward-only dependency flow
 
-## V3.1 Fixes (Branch: v3.1-fixes)
+## V3.1 Fixes (Branch: v3.3)
 
 ### Forbidden Error Handling
-- **`telegram.error.Forbidden` handling** — When `send_photo` raises `Forbidden` (user blocked the bot), all schedules for that user are deactivated and in-memory jobs removed. Prevents wasted API calls on blocked users. Helper `_deactivate_all_user_schedules()` in `schedule_handler.py` follows the same pattern as `/stop` command. Fallback: if topic is deleted, removes just the triggering job. 6 new unit tests in `test_schedule_handler.py`.
+- **`telegram.error.Forbidden` handling** — When `send_photo` raises `Forbidden` (user blocked the bot), all schedules for that user are deactivated and in-memory jobs removed. Prevents wasted API calls on blocked users. Shared helper `deactivate_all_user_schedules()` in `job_utils.py` used by both Forbidden handler and `/stop` command. Fallback: if topic is deleted, deactivates orphaned schedule in DB and removes the triggering job. 6 new unit tests in `test_schedule_handler.py`.
+
+### Copilot PR #7 Fixes
+1. **Fix orphaned schedule on Forbidden + deleted topic** — When `send_photo` raises `Forbidden` and the topic no longer exists in DB, the schedule was only removed from memory but not deactivated in the database. On restart, the orphaned active schedule would be reloaded and keep failing. Now calls `schedule_service.remove_schedule()` before `remove_job()`.
+2. **DRY: extract `deactivate_all_user_schedules` to `job_utils.py`** — The inline deactivation loop in `/stop` command (`quick_commands_handler.py`) and `_deactivate_all_user_schedules()` in `schedule_handler.py` were structurally identical. Extracted to shared `deactivate_all_user_schedules()` in `job_utils.py`.
 
 ### Copilot PR #5 Fixes
 1. **Add `exc_info=True`** to corrupted `metadata_prefs` JSON warning in `topic_repo.py` — includes traceback for diagnostics.

@@ -1,8 +1,9 @@
 # exclude harness-engineering-opencode-kit
 AGENTS.md
-.github
-docs/
-tools/
+docs/**
+!docs/plans
+!docs/plans/**
+!docs/state.md
 
 # Python
 __pycache__/

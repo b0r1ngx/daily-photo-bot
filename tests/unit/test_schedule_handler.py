@@ -8,6 +8,7 @@ import pytest
 from telegram.error import Forbidden
 
 from src.runtime.handlers.schedule_handler import (
+    _fan_out_to_subscribers,
     _send_scheduled_photo,
 )
 from src.runtime.job_utils import deactivate_all_user_schedules
@@ -279,3 +280,114 @@ class TestSendScheduledPhotoForbidden:
         topic_service.get_user_topics.assert_not_awaited()
         schedule_service.remove_schedule.assert_not_awaited()
         schedule_service.mark_sent.assert_not_awaited()
+
+
+# ===========================================================================
+# _fan_out_to_subscribers tests
+# ===========================================================================
+
+
+class TestFanOutToSubscribers:
+    """Tests for fan-out photo delivery to subscribers."""
+
+    async def test_no_share_service_is_no_op(self):
+        """Does nothing if share_service is not in bot_data."""
+        ctx = MagicMock()
+        ctx.bot_data = {}
+        ctx.bot = AsyncMock()
+
+        await _fan_out_to_subscribers(ctx, 1, "http://img.jpg", "caption")
+        ctx.bot.send_photo.assert_not_awaited()
+
+    async def test_no_subscribers_is_no_op(self):
+        """Does nothing if there are no subscribers."""
+        ctx = MagicMock()
+        share_service = AsyncMock()
+        share_service.get_subscriber_telegram_ids.return_value = []
+        ctx.bot_data = {"share_service": share_service}
+        ctx.bot = AsyncMock()
+
+        await _fan_out_to_subscribers(ctx, 1, "http://img.jpg", "caption")
+        ctx.bot.send_photo.assert_not_awaited()
+
+    async def test_sends_to_all_subscribers(self):
+        """Sends photo to each subscriber."""
+        ctx = MagicMock()
+        share_service = AsyncMock()
+        share_service.get_subscriber_telegram_ids.return_value = [100, 200, 300]
+        ctx.bot_data = {"share_service": share_service}
+        ctx.bot = AsyncMock()
+
+        await _fan_out_to_subscribers(ctx, 1, "http://img.jpg", "cap")
+
+        assert ctx.bot.send_photo.await_count == 3
+        chat_ids = [call.kwargs["chat_id"] for call in ctx.bot.send_photo.await_args_list]
+        assert chat_ids == [100, 200, 300]
+
+    async def test_forbidden_removes_subscriber_not_owner(self):
+        """Forbidden from subscriber removes only that subscription."""
+        ctx = MagicMock()
+        share_service = AsyncMock()
+        share_service.get_subscriber_telegram_ids.return_value = [100, 200]
+        ctx.bot_data = {"share_service": share_service}
+        ctx.bot = AsyncMock()
+        ctx.bot.send_photo.side_effect = [
+            Forbidden("blocked"),
+            None,  # second subscriber succeeds
+        ]
+
+        await _fan_out_to_subscribers(ctx, 1, "http://img.jpg", "cap")
+
+        share_service.remove_subscriber_by_telegram_id.assert_awaited_once_with(1, 100)
+        assert ctx.bot.send_photo.await_count == 2
+
+    async def test_non_forbidden_error_continues(self):
+        """Non-Forbidden errors are logged but delivery continues."""
+        ctx = MagicMock()
+        share_service = AsyncMock()
+        share_service.get_subscriber_telegram_ids.return_value = [100, 200]
+        ctx.bot_data = {"share_service": share_service}
+        ctx.bot = AsyncMock()
+        ctx.bot.send_photo.side_effect = [
+            RuntimeError("network timeout"),
+            None,
+        ]
+
+        await _fan_out_to_subscribers(ctx, 1, "http://img.jpg", "cap")
+
+        share_service.remove_subscriber_by_telegram_id.assert_not_awaited()
+        assert ctx.bot.send_photo.await_count == 2
+
+    async def test_remove_subscriber_failure_is_caught(self):
+        """If remove_subscriber_by_telegram_id fails, it's caught."""
+        ctx = MagicMock()
+        share_service = AsyncMock()
+        share_service.get_subscriber_telegram_ids.return_value = [100]
+        share_service.remove_subscriber_by_telegram_id.side_effect = RuntimeError("DB error")
+        ctx.bot_data = {"share_service": share_service}
+        ctx.bot = AsyncMock()
+        ctx.bot.send_photo.side_effect = Forbidden("blocked")
+
+        # Should NOT raise
+        await _fan_out_to_subscribers(ctx, 1, "http://img.jpg", "cap")
+
+    @patch("src.runtime.handlers.schedule_handler._fan_out_to_subscribers", new_callable=AsyncMock)
+    @patch("src.runtime.handlers.schedule_handler.build_photo_caption", return_value="caption")
+    async def test_send_scheduled_photo_calls_fan_out(
+        self,
+        mock_caption,
+        mock_fan_out,
+        context,
+        topic_service,
+        photo_service,
+        schedule_service,
+    ):
+        """_send_scheduled_photo calls fan-out after successful owner send."""
+        context.bot.send_photo.return_value = None
+        schedule_service.get_schedule = AsyncMock(return_value=ACTIVE_SCHEDULE_A)
+
+        await _send_scheduled_photo(context)
+
+        mock_fan_out.assert_awaited_once()
+        call_args = mock_fan_out.call_args
+        assert call_args[0][1] == 1  # topic_id

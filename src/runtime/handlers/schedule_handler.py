@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import datetime
 import logging
 
@@ -327,6 +328,9 @@ async def _send_scheduled_photo(context: ContextTypes.DEFAULT_TYPE) -> None:
         logger.exception("Failed to send photo to chat %d", job.chat_id)
         return
 
+    # Fan-out: send the same photo to active subscribers
+    await _fan_out_to_subscribers(context, topic_id, photo.url, caption)
+
     # Update last_sent_at
     schedule = await schedule_service.get_schedule(topic_id)
     if schedule and schedule.id:
@@ -339,3 +343,57 @@ def _format_interval(seconds: int, language_code: str | None = None) -> str:
         return t("interval_minutes", language_code, count=seconds // 60)
     hours = seconds // 3600
     return t("interval_hours", language_code, count=hours)
+
+
+async def _fan_out_to_subscribers(
+    context: ContextTypes.DEFAULT_TYPE,
+    topic_id: int,
+    photo_url: str,
+    caption: str,
+) -> None:
+    """Send the photo to all active subscribers of a topic.
+
+    Per-subscriber Forbidden errors remove only that subscriber's subscription
+    (not the owner's schedule). A 0.25s delay between sends avoids API spam.
+    """
+    from src.service.share_service import ShareService
+
+    share_service: ShareService | None = context.bot_data.get("share_service")
+    if share_service is None:
+        return
+
+    subscriber_ids = await share_service.get_subscriber_telegram_ids(topic_id)
+    if not subscriber_ids:
+        return
+
+    for i, sub_chat_id in enumerate(subscriber_ids):
+        if i > 0:
+            await asyncio.sleep(0.25)
+        try:
+            await context.bot.send_photo(
+                chat_id=sub_chat_id,
+                photo=photo_url,
+                caption=caption,
+                parse_mode="MarkdownV2",
+            )
+        except Forbidden:
+            logger.warning(
+                "Subscriber chat_id=%d blocked bot, removing subscription for topic_id=%d.",
+                sub_chat_id,
+                topic_id,
+            )
+            try:
+                await share_service.remove_subscriber_by_telegram_id(topic_id, sub_chat_id)
+            except Exception:
+                logger.exception(
+                    "Failed to remove subscription for blocked subscriber chat_id=%d, "
+                    "topic_id=%d",
+                    sub_chat_id,
+                    topic_id,
+                )
+        except Exception:
+            logger.exception(
+                "Failed to send photo to subscriber chat_id=%d for topic_id=%d",
+                sub_chat_id,
+                topic_id,
+            )

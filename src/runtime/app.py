@@ -51,6 +51,11 @@ from src.runtime.handlers.schedule_handler import (
     select_schedule_type_callback,
     select_topic_callback,
 )
+from src.runtime.handlers.share_handler import (
+    share_accept_callback,
+    share_decline_callback,
+    share_topic_callback,
+)
 from src.runtime.handlers.start_handler import receive_first_topic, start_command
 from src.runtime.handlers.topic_handler import add_topic_menu, receive_new_topic
 from src.runtime.handlers.topic_manage_handler import (
@@ -115,6 +120,7 @@ def build_application() -> Application:  # type: ignore[type-arg]
                     schedule_from_topics_callback, pattern=r"^schedule_\d+$",
                 ),
                 CallbackQueryHandler(settings_callback, pattern=r"^settings_\d+$"),
+                CallbackQueryHandler(share_topic_callback, pattern=r"^share_\d+$"),
                 CallbackQueryHandler(delete_topic_callback, pattern=r"^delete_\d+$"),
                 CallbackQueryHandler(rename_topic_callback, pattern=r"^rename_\d+$"),
             ],
@@ -151,5 +157,9 @@ def build_application() -> Application:  # type: ignore[type-arg]
     # Payment handlers (must be outside conversation handler)
     app.add_handler(PreCheckoutQueryHandler(pre_checkout_callback))
     app.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
+
+    # Share accept/decline handlers (standalone, outside conversation handler)
+    app.add_handler(CallbackQueryHandler(share_accept_callback, pattern=r"^shareaccept_"))
+    app.add_handler(CallbackQueryHandler(share_decline_callback, pattern=r"^sharedecline_"))
 
     return app

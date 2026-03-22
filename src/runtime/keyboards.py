@@ -33,7 +33,7 @@ def topic_list_keyboard(topics: list[Topic]) -> InlineKeyboardMarkup:
 
 
 def topic_manage_keyboard(topic: Topic, language_code: str | None = None) -> InlineKeyboardMarkup:
-    """Build inline keyboard with schedule/rename/delete actions for a topic."""
+    """Build inline keyboard with schedule/share/rename/delete actions for a topic."""
     if topic.id is None:
         raise ValueError(f'Cannot build manage keyboard for topic without id: {topic.name}')
     schedule_btn = InlineKeyboardButton(
@@ -42,13 +42,18 @@ def topic_manage_keyboard(topic: Topic, language_code: str | None = None) -> Inl
     settings_btn = InlineKeyboardButton(
         t('btn_settings', language_code), callback_data=f"settings_{topic.id}",
     )
+    share_btn = InlineKeyboardButton(
+        t('btn_share', language_code), callback_data=f"share_{topic.id}",
+    )
     rename_btn = InlineKeyboardButton(
         t('btn_rename', language_code), callback_data=f"rename_{topic.id}",
     )
     delete_btn = InlineKeyboardButton(
         t('btn_delete', language_code), callback_data=f"delete_{topic.id}",
     )
-    return InlineKeyboardMarkup([[schedule_btn], [settings_btn], [rename_btn, delete_btn]])
+    return InlineKeyboardMarkup([
+        [schedule_btn], [settings_btn], [share_btn], [rename_btn, delete_btn],
+    ])
 
 
 def schedule_type_keyboard(language_code: str | None = None) -> InlineKeyboardMarkup:
@@ -130,3 +135,18 @@ def metadata_settings_keyboard(
         ),
     ])
     return InlineKeyboardMarkup(buttons)
+
+
+def share_confirm_keyboard(
+    token: str, language_code: str | None = None,
+) -> InlineKeyboardMarkup:
+    """Build inline keyboard for share confirmation (accept/decline)."""
+    accept_btn = InlineKeyboardButton(
+        t("share_confirm_yes", language_code),
+        callback_data=f"shareaccept_{token}",
+    )
+    decline_btn = InlineKeyboardButton(
+        t("share_confirm_no", language_code),
+        callback_data=f"sharedecline_{token}",
+    )
+    return InlineKeyboardMarkup([[accept_btn, decline_btn]])

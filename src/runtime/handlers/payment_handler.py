@@ -29,6 +29,12 @@ async def pre_checkout_callback(update: Update, context: ContextTypes.DEFAULT_TY
     user_id = query.from_user.id
     lang = query.from_user.language_code if query.from_user else None
 
+    # Check for share payment first
+    share_topic_id = payment_service.verify_share_payment(query.invoice_payload, user_id)
+    if share_topic_id is not None:
+        await query.answer(ok=True)
+        return
+
     if payment_service.verify_payment(query.invoice_payload, user_id):
         await query.answer(ok=True)
     else:
@@ -36,16 +42,31 @@ async def pre_checkout_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
 
 async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle successful payment — allow user to add a new topic."""
+    """Handle successful payment — allow user to add a new topic or share slot."""
     if not update.message or not update.message.successful_payment:
         return
 
+    payment = update.message.successful_payment
+    user_id = update.effective_user.id if update.effective_user else 0
+
     logger.info(
         "Payment received from user %s: %s %s",
-        update.effective_user.id if update.effective_user else "unknown",
-        update.message.successful_payment.total_amount,
-        update.message.successful_payment.currency,
+        user_id or "unknown",
+        payment.total_amount,
+        payment.currency,
     )
+
+    # Check if this is a share unlock payment
+    payment_service: PaymentService = context.bot_data["payment_service"]
+    share_topic_id = payment_service.verify_share_payment(payment.invoice_payload, user_id)
+    if share_topic_id is not None:
+        context.user_data["paid_share_pending"] = share_topic_id
+        await update.message.reply_text(
+            t("payment_success", _lang(update)),
+            parse_mode="MarkdownV2",
+            reply_markup=main_menu_keyboard(),
+        )
+        return
 
     # Mark that user can add a paid topic
     context.user_data["paid_topic_pending"] = True

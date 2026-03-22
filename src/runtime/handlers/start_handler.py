@@ -26,7 +26,10 @@ def _lang(update: Update) -> str | None:
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Handle /start command. Ask user for their first topic."""
+    """Handle /start command. Ask user for their first topic.
+
+    Also handles deep links: /start share_{token} triggers the share flow.
+    """
     if not update.effective_user or not update.message:
         return STATE_AWAITING_TOPIC
 
@@ -41,6 +44,13 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         language_code=lang,
     )
     context.user_data["db_user_id"] = db_user.id
+
+    # Handle share deep link: /start share_{token}
+    if context.args and context.args[0].startswith("share_"):
+        from src.runtime.handlers.share_handler import handle_share_deep_link
+
+        token = context.args[0][len("share_"):]
+        return await handle_share_deep_link(update, context, token)
 
     # Check if user already has topics
     topics = await topic_service.get_user_topics(db_user.id)

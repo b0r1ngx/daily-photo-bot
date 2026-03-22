@@ -25,6 +25,24 @@ _MIGRATIONS: list[tuple[int, str]] = [
         "ON api_requests(source, requested_at);",
     ),
     (3, "ALTER TABLE topics ADD COLUMN metadata_prefs TEXT DEFAULT NULL"),
+    (
+        4,
+        "ALTER TABLE topics ADD COLUMN share_token TEXT DEFAULT NULL;"
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_topics_share_token "
+        "ON topics(share_token);"
+        "CREATE TABLE IF NOT EXISTS topic_subscriptions ("
+        "    id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "    topic_id INTEGER NOT NULL REFERENCES topics(id) ON DELETE CASCADE,"
+        "    subscriber_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,"
+        "    is_active INTEGER DEFAULT 1,"
+        "    created_at TEXT DEFAULT (datetime('now')),"
+        "    UNIQUE(topic_id, subscriber_user_id)"
+        ");"
+        "CREATE INDEX IF NOT EXISTS idx_topic_subs_topic "
+        "ON topic_subscriptions(topic_id);"
+        "CREATE INDEX IF NOT EXISTS idx_topic_subs_user "
+        "ON topic_subscriptions(subscriber_user_id);",
+    ),
 ]
 
 _DDL = """
@@ -44,6 +62,7 @@ CREATE TABLE IF NOT EXISTS topics (
     is_free INTEGER DEFAULT 1,
     is_active INTEGER DEFAULT 1,
     metadata_prefs TEXT DEFAULT NULL,
+    share_token TEXT DEFAULT NULL,
     created_at TEXT DEFAULT (datetime('now'))
 );
 
@@ -76,6 +95,19 @@ CREATE TABLE IF NOT EXISTS api_requests (
 );
 
 CREATE INDEX IF NOT EXISTS idx_api_requests_source_date ON api_requests(source, requested_at);
+
+CREATE TABLE IF NOT EXISTS topic_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    topic_id INTEGER NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+    subscriber_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(topic_id, subscriber_user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_topic_subs_topic ON topic_subscriptions(topic_id);
+CREATE INDEX IF NOT EXISTS idx_topic_subs_user ON topic_subscriptions(subscriber_user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_topics_share_token ON topics(share_token);
 """
 
 

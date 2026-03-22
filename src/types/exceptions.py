@@ -52,3 +52,19 @@ class TopicLimitError(BotError):
     def __init__(self, limit: int) -> None:
         self.limit = limit
         super().__init__(f"Free topic limit reached ({limit})")
+
+
+class ShareLimitError(BotError):
+    """Free share limit reached for a topic."""
+
+    def __init__(self, topic_id: int) -> None:
+        self.topic_id = topic_id
+        super().__init__(f"Free share limit reached for topic {topic_id}")
+
+
+class InvalidShareTokenError(BotError):
+    """Share token is invalid or expired."""
+
+    def __init__(self, token: str) -> None:
+        self.token = token
+        super().__init__(f"Invalid share token: '{token}'")

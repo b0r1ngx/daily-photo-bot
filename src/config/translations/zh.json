@@ -57,5 +57,17 @@
     "metadata_description": "描述",
     "metadata_location": "位置",
     "metadata_camera": "相机",
-    "metadata_not_specified": "作者未注明"
+    "metadata_not_specified": "作者未注明",
+    "btn_share": "🔗 分享",
+    "share_link_text": "🔗 将此链接分享给朋友:\n\n{link}\n\n转发此消息来邀请他们!",
+    "share_limit_reached": "您已达到此主题的免费分享上限。使用 Telegram Stars 付费以添加更多订阅者。",
+    "share_confirm_prompt": "📸 您被邀请接收关于 \"{name}\" 的照片!\n\n您想订阅吗?",
+    "share_confirm_yes": "✅ 是的，订阅!",
+    "share_confirm_no": "❌ 不了，谢谢",
+    "share_accepted": "✅ 您已成功订阅 \"{name}\"! 您将按照所有者的排程接收照片。",
+    "share_declined": "👋 没关系! 邀请已拒绝。",
+    "share_invalid_token": "❌ 此分享链接无效或已过期。",
+    "share_already_subscribed": "您已经订阅了此主题。",
+    "share_own_topic": "❌ 您不能订阅自己的主题!",
+    "unsubscribe_success": "✅ 已取消订阅 \"{name}\"。您将不再收到此主题的照片。"
 }

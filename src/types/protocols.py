@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Protocol
 
 from src.types.schedule import ScheduleConfig
+from src.types.share import TopicSubscription
 from src.types.user import MetadataPrefs, Topic, User
 
 
@@ -135,4 +136,46 @@ class AnalyticsRepository(Protocol):
         ...
 
     async def cleanup_old_api_requests(self, older_than_dt_text: str) -> int:
+        ...
+
+
+class ShareRepository(Protocol):
+    """Interface for topic sharing and subscription data access."""
+
+    async def get_share_token(self, topic_id: int) -> str | None:
+        """Get the share token for a topic, or None if not set."""
+        ...
+
+    async def set_share_token(self, topic_id: int, token: str) -> None:
+        """Set/update the share token for a topic."""
+        ...
+
+    async def get_topic_id_by_share_token(self, token: str) -> int | None:
+        """Look up the active topic ID for a given share token."""
+        ...
+
+    async def create_subscription(
+        self, topic_id: int, subscriber_user_id: int,
+    ) -> TopicSubscription:
+        """Create a new subscription (or reactivate a soft-deleted one)."""
+        ...
+
+    async def deactivate_subscription(
+        self, topic_id: int, subscriber_user_id: int,
+    ) -> bool:
+        """Soft-delete a subscription. Returns True if a row was updated."""
+        ...
+
+    async def get_active_subscription_count(self, topic_id: int) -> int:
+        """Count active subscribers for a topic."""
+        ...
+
+    async def get_subscription(
+        self, topic_id: int, subscriber_user_id: int,
+    ) -> TopicSubscription | None:
+        """Get a subscription by topic and subscriber."""
+        ...
+
+    async def get_subscriber_telegram_ids(self, topic_id: int) -> list[int]:
+        """Get Telegram IDs of all active subscribers for fan-out delivery."""
         ...

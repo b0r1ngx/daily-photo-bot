@@ -38,7 +38,10 @@ UNSPLASH_ACCESS_KEY: str = os.getenv("UNSPLASH_ACCESS_KEY", "")
 DATABASE_PATH: str = os.getenv("DATABASE_PATH", "data/bot.db")
 STAR_PRICE: int = int(os.getenv("STAR_PRICE", "1"))
 FREE_TOPICS_LIMIT: int = int(os.getenv("FREE_TOPICS_LIMIT", "1"))
+FREE_SHARES_PER_TOPIC: int = int(os.getenv("FREE_SHARES_PER_TOPIC", "1"))
+SHARE_STAR_PRICE: int = int(os.getenv("SHARE_STAR_PRICE", "1"))
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+BOT_USERNAME: str = os.getenv("BOT_USERNAME", "")
 
 # Analytics: private Telegram group where daily stats are sent (optional).
 # The bot must be an admin in this group. Set to the group's chat ID (negative integer).

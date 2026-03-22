@@ -22,6 +22,7 @@ async def _startup() -> None:
     from src.repo.database import get_connection, init_db
     from src.repo.schedule_repo import ScheduleRepo
     from src.repo.sent_photo_repo import SentPhotoRepo
+    from src.repo.share_repo import ShareRepo
     from src.repo.topic_repo import TopicRepo
     from src.repo.user_repo import UserRepo
     from src.runtime.app import build_application
@@ -29,6 +30,7 @@ async def _startup() -> None:
     from src.service.payment_service import PaymentService
     from src.service.photo_service import PhotoService
     from src.service.schedule_service import ScheduleService
+    from src.service.share_service import ShareService
     from src.service.topic_service import TopicService
 
     # Initialize database
@@ -42,6 +44,7 @@ async def _startup() -> None:
     schedule_repo = ScheduleRepo(db)
     sent_photo_repo = SentPhotoRepo(db)
     analytics_repo = AnalyticsRepo(db)
+    share_repo = ShareRepo(db)
 
     # Create services (inject repos)
     topic_service = TopicService(user_repo=user_repo, topic_repo=topic_repo)
@@ -52,6 +55,9 @@ async def _startup() -> None:
     schedule_service = ScheduleService(schedule_repo=schedule_repo)
     payment_service = PaymentService()
     analytics_service = AnalyticsService(analytics_repo=analytics_repo)
+    share_service = ShareService(
+        share_repo=share_repo, topic_repo=topic_repo, user_repo=user_repo,
+    )
 
     # Build Telegram application
     app = build_application()
@@ -62,6 +68,7 @@ async def _startup() -> None:
     app.bot_data["schedule_service"] = schedule_service
     app.bot_data["payment_service"] = payment_service
     app.bot_data["analytics_service"] = analytics_service
+    app.bot_data["share_service"] = share_service
 
     # Reload schedules from database
     await _reload_schedules(app, schedule_service, topic_service)

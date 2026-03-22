@@ -57,5 +57,17 @@
     "metadata_description": "الوصف",
     "metadata_location": "الموقع",
     "metadata_camera": "الكاميرا",
-    "metadata_not_specified": "لم يحدده المصور"
+    "metadata_not_specified": "لم يحدده المصور",
+    "btn_share": "🔗 مشاركة",
+    "share_link_text": "🔗 شارك هذا الرابط مع صديق:\n\n{link}\n\nأعد توجيه هذه الرسالة لدعوتهم!",
+    "share_limit_reached": "لقد وصلت إلى حد المشاركة المجانية لهذا الموضوع. ادفع بـ Telegram Stars لإضافة المزيد من المشتركين.",
+    "share_confirm_prompt": "📸 لقد تمت دعوتك لاستقبال صور حول \"{name}\"!\n\nهل تريد الاشتراك؟",
+    "share_confirm_yes": "✅ نعم، اشتركني!",
+    "share_confirm_no": "❌ لا، شكرًا",
+    "share_accepted": "✅ أنت الآن مشترك في \"{name}\"! ستستقبل الصور وفقًا لجدول المالك.",
+    "share_declined": "👋 لا مشكلة! تم رفض الدعوة.",
+    "share_invalid_token": "❌ رابط المشاركة هذا غير صالح أو منتهي الصلاحية.",
+    "share_already_subscribed": "أنت مشترك بالفعل في هذا الموضوع.",
+    "share_own_topic": "❌ لا يمكنك الاشتراك في موضوعك الخاص!",
+    "unsubscribe_success": "✅ تم إلغاء الاشتراك من \"{name}\". لن تستقبل صورًا لهذا الموضوع بعد الآن."
 }

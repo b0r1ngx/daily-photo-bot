@@ -57,5 +57,17 @@
     "metadata_description": "Penerangan",
     "metadata_location": "Lokasi",
     "metadata_camera": "Kamera",
-    "metadata_not_specified": "tidak dinyatakan oleh pengarang"
+    "metadata_not_specified": "tidak dinyatakan oleh pengarang",
+    "btn_share": "🔗 Kongsi",
+    "share_link_text": "🔗 Kongsi pautan ini dengan rakan:\n\n{link}\n\nMajukan mesej ini untuk menjemput mereka!",
+    "share_limit_reached": "Anda telah mencapai had perkongsian percuma untuk topik ini. Bayar dengan Telegram Stars untuk menambah lebih ramai pelanggan.",
+    "share_confirm_prompt": "📸 Anda telah dijemput untuk menerima foto tentang \"{name}\"!\n\nAdakah anda ingin melanggan?",
+    "share_confirm_yes": "✅ Ya, langgankan saya!",
+    "share_confirm_no": "❌ Tidak, terima kasih",
+    "share_accepted": "✅ Anda kini melanggan \"{name}\"! Anda akan menerima foto mengikut jadual pemilik.",
+    "share_declined": "👋 Tiada masalah! Jemputan ditolak.",
+    "share_invalid_token": "❌ Pautan perkongsian ini tidak sah atau telah tamat tempoh.",
+    "share_already_subscribed": "Anda sudah melanggan topik ini.",
+    "share_own_topic": "❌ Anda tidak boleh melanggan topik anda sendiri!",
+    "unsubscribe_success": "✅ Berhenti melanggan \"{name}\". Anda tidak akan menerima foto untuk topik ini lagi."
 }

@@ -57,5 +57,17 @@
     "metadata_description": "Description",
     "metadata_location": "Location",
     "metadata_camera": "Camera",
-    "metadata_not_specified": "not specified by author"
+    "metadata_not_specified": "not specified by author",
+    "btn_share": "🔗 Share",
+    "share_link_text": "🔗 Share this link with a friend:\n\n{link}\n\nForward this message to invite them!",
+    "share_limit_reached": "You've reached the free share limit for this topic. Pay with Telegram Stars to add more subscribers.",
+    "share_confirm_prompt": "📸 You've been invited to receive photos about \"{name}\"!\n\nWould you like to subscribe?",
+    "share_confirm_yes": "✅ Yes, subscribe me!",
+    "share_confirm_no": "❌ No thanks",
+    "share_accepted": "✅ You're now subscribed to \"{name}\"! You'll receive photos on the owner's schedule.",
+    "share_declined": "👋 No problem! Invitation declined.",
+    "share_invalid_token": "❌ This share link is invalid or expired.",
+    "share_already_subscribed": "You're already subscribed to this topic.",
+    "share_own_topic": "❌ You can't subscribe to your own topic!",
+    "unsubscribe_success": "✅ Unsubscribed from \"{name}\". You won't receive photos for this topic anymore."
 }

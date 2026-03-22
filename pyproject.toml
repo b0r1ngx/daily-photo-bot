@@ -1,6 +1,6 @@
 [project]
 name = "daily-photo-bot"
-version = "3.3.0"
+version = "4.0.0"
 description = "Telegram bot that sends daily photos based on user-chosen topics"
 requires-python = ">=3.11"
 dependencies = [

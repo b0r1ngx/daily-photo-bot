@@ -2,34 +2,66 @@
 **Last Updated:** 2026-03-22
 
 ## Active Task
-All 7 tasks from `docs/plans/todo-list.md` are complete.
-Copilot review fixes (rounds 1 and 2) for PR #4 are complete.
-Copilot review fixes for PRs #5 and #6 are complete.
-`/analytics` on-demand command added for the admin group.
-Forbidden error handling added to scheduled photo delivery.
+Topic sharing feature (v4.0.0) is complete.
 
 ## Current Status
-- **Version:** 3.3.0 (source: `src/config/constants.py:BOT_VERSION`)
-- **Branch:** `v3.3`
+- **Version:** 4.0.0 (source: `src/config/constants.py:BOT_VERSION`)
+- **Branch:** `v3.3` (will be committed as v4.0.0)
 - **VPS:** Running V2.3 (deployed, production)
 - **Python:** 3.11+ required (dev environment running 3.13.7)
 
-## V2.4 Completed (Todo-List Tasks — 7 of 7)
+## V4.0.0 — Topic Sharing Feature
 
-### Completed
-1. **Task 3 (DB Investigation)** — Analyzed DB schema and data inventory. Users, topics, schedules, and sent_photos are tracked. User clicks are NOT logged. Photo sends ARE tracked via `sent_photos` table. Output: `output-task3-db-investigation.md`.
-2. **Task 7 (Photo Delivery Debug)** — Investigated why user stopped receiving photos. Identified 5 silent failure points in `schedule_handler.py` and `main.py`. 11 root causes ranked by likelihood. Requires production DB/logs to diagnose. Output: `output-task7-diagnostics.md`.
-3. **Task 6 (Reply Keyboard Bug Fix)** — Fixed `ConversationHandler` in `app.py`: reply keyboard buttons (Add topic, My Topics, Schedule) now work from ANY conversation state. Added `MessageHandler` entries to both `entry_points` and `fallbacks`.
-4. **Task 5 (Schedule Button)** — Added "Schedule" button to topic management view. New keyboard layout: `[[Schedule], [Settings], [Rename, Delete]]`. Handler with IDOR protection (verifies topic ownership). New `btn_schedule` i18n key added to all 12 languages.
-5. **Task 1 (i18n Expansion)** — Added 7 new languages: Hindi (hi), Arabic (ar), Bahasa Malaysia (ms), Bengali (bn), French (fr), Italian (it), German (de). Total: 12 languages, 59 translation keys each. Updated `search_terms.json` with terms for all 7 new languages. 14 new tests added.
-6. **Task 4 (Analytics Group)** — Full analytics pipeline: `AnalyticsSnapshot` type, `AnalyticsRepo` (8 query methods), `AnalyticsService` (snapshot collection + message formatting), daily job at midnight UTC via `job_queue.run_daily()`. `api_requests` table with 30-day retention. Migration v2. 26 new tests (15 integration + 8 service + 3 handler).
-7. **Task 2 (Photo Metadata)** — Per-topic metadata display preferences (description, location, camera). `MetadataPrefs` dataclass, `build_photo_caption()` shared caption builder, metadata extraction from Unsplash API (description/alt, location.name, exif.name). Settings UI with toggle keyboard (✅/❌). Migration v3. 22 new tests. 6 new i18n keys across 12 languages.
+### Overview
+Users can share their photo topics with other users. The owner generates a share link, forwards it, and the invited user subscribes. Free tier: 1 share per topic. Paid: additional share slots via Telegram Stars.
+
+### Implementation Summary
+
+#### New Files
+- `src/types/share.py` — `TopicSubscription` frozen dataclass
+- `src/repo/share_repo.py` — `ShareRepo` (8 methods: token CRUD, subscription CRUD, subscriber lookup)
+- `src/service/share_service.py` — `ShareService` (token generation, validation, subscribe/unsubscribe, fan-out support)
+- `src/runtime/handlers/share_handler.py` — 4 handlers: `share_topic_callback`, `handle_share_deep_link`, `share_accept_callback`, `share_decline_callback`
+
+#### Modified Files
+- `src/types/exceptions.py` — Added `ShareLimitError`, `InvalidShareTokenError`
+- `src/types/protocols.py` — Added `ShareRepository` protocol (8 methods)
+- `src/types/i18n.py` — Added 12 `MessageKey` literals for sharing
+- `src/config/settings.py` — Added `FREE_SHARES_PER_TOPIC`, `SHARE_STAR_PRICE`, `BOT_USERNAME`
+- `src/config/constants.py` — Version bump to 4.0.0
+- `src/config/translations/*.json` — All 12 languages updated with 12 new keys (71 total per language)
+- `src/repo/database.py` — Migration v4 (share_token column + topic_subscriptions table)
+- `src/service/payment_service.py` — Added `create_share_invoice_params`, `verify_share_payment`
+- `src/runtime/keyboards.py` — Added Share button to topic manage, `share_confirm_keyboard`
+- `src/runtime/handlers/start_handler.py` — Deep link parsing for `share_` tokens
+- `src/runtime/handlers/schedule_handler.py` — Fan-out to subscribers after owner send (0.25s delay, per-subscriber Forbidden handling)
+- `src/runtime/handlers/payment_handler.py` — Extended pre_checkout and successful_payment for share payments
+- `src/runtime/app.py` — Registered share handlers (inside + outside ConversationHandler)
+- `src/main.py` — Wired ShareRepo and ShareService
+
+#### New Tests (65 tests)
+- `tests/integration/test_share_repo.py` — 17 integration tests (token + subscription CRUD)
+- `tests/unit/test_share_service.py` — 17 unit tests (all service methods + error paths)
+- `tests/unit/test_share_handler.py` — 18 unit tests (all 4 handlers)
+- `tests/unit/test_schedule_handler.py` — 7 new fan-out tests added
+- `tests/unit/test_payment_service.py` — 5 new share payment tests added
+
+#### Database Changes
+- **Migration v4:** `ALTER TABLE topics ADD COLUMN share_token TEXT` + `CREATE TABLE topic_subscriptions` with indexes
+- **6 tables total:** users, topics, schedules, sent_photos, api_requests, topic_subscriptions
+
+### Sharing Rules
+- Free: 1 share per topic (configurable via `FREE_SHARES_PER_TOPIC`)
+- Paid: additional slots via Telegram Stars (`SHARE_STAR_PRICE`, default 1)
+- Subscriber gets same schedule as owner (fan-out delivery)
+- Per-subscriber Forbidden handling (removes subscription, not owner's schedule)
+- Deep links: `t.me/{bot}?start=share_{token}` with `secrets.token_urlsafe(16)` (128-bit entropy)
 
 ## Verification Status
-- **191/191 tests passing** (55 integration + 136 unit)
+- **257/257 tests passing** (72 integration + 185 unit)
 - **Layer dependency linter:** passing (0 violations)
 - **Ruff linter:** passing (0 errors)
-- **Architecture compliance:** All 5 layers (types, config, repo, service, runtime) have correct downward-only dependency flow
+- **Architecture compliance:** All 5 layers correct
 
 ## V3.3 Fixes (Branch: v3.3)
 
